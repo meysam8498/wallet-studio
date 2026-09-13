@@ -16,7 +16,7 @@
    docker run -d --name daftaram \
      -p 8080:80 \
      --restart unless-stopped \
-     -e VITE_CONVEX_URL="https://<DEPLOYMENT>.convex.cloud" \
+     -e VITE_CONVEX_URL="https://glorious-panda-581.convex.cloud" \
      meysam8498/daftaram:latest
 
    سپس http://localhost:8080 را باز کنید.
@@ -29,7 +29,7 @@ services:
     ports: ["8080:80"]
     restart: unless-stopped
     environment:
-      VITE_CONVEX_URL: https://<DEPLOYMENT>.convex.cloud
+      VITE_CONVEX_URL: https://glorious-panda-581.convex.cloud
 
 ▌نکته‌ها
 
