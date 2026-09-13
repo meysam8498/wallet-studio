@@ -118,9 +118,9 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
                   <div className="flex justify-center">
                     <button
                       type="button"
-                      aria-label="صفحهٔ اصلی"
+                      aria-label="درباره و نسخه‌ها"
                       className="mt-4 mb-4 text-foreground"
-                      onClick={() => navigate("/")}
+                      onClick={() => navigate("/about")}
                     >
                       <LedgerMark className="size-14" />
                     </button>
