@@ -1,0 +1,7 @@
+Visit https://auth.convex.dev/device?user_code=NSPW-CZDH to finish logging in.
+You should see the following code which expires in 299 seconds: NSPW-CZDH
+- Open https://auth.convex.dev/device?user_code=NSPW-CZDH in your browser to log in.
+
+[32m✔[39m Saved credentials to Unexpected Error: Error: Client network socket disconnected before secure TLS connection was established
+nonymous-wallet-studio")
+✖ Cannot prompt for input in non-interactive terminals. (Would you like to link your existing deployment to your account? ("anonymous-wallet-studio"))
