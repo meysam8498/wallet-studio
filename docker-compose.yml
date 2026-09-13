@@ -1,0 +1,10 @@
+services:
+  web:
+    image: meysam8498/daftaram:2.1.0
+    build:
+      context: .
+      args:
+        VITE_CONVEX_URL: ${VITE_CONVEX_URL}
+    ports:
+      - "8080:80"
+    restart: unless-stopped

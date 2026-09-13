@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "دفتر من",
+  "version": "2.1.0",
+  "identifier": "com.meysamijadi.daftaram",
+  "build": {
+    "beforeDevCommand": "bun run dev",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "bun run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "دفتر من",
+        "width": 1200,
+        "height": 800,
+        "minWidth": 420,
+        "minHeight": 600,
+        "center": true,
+        "resizable": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["msi", "nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    },
+    "shortDescription": "حسابداری شخصی با تقویم شمسی",
+    "longDescription": "دفتر من — اپ حسابداری شخصی برای درآمد، هزینه، حساب‌ها، بودجه، طلب و بدهی و خانوار مشترک؛ با تقویم شمسی و همگام‌سازی زنده میان همهٔ دستگاه‌ها."
+  }
+}

@@ -1,0 +1,58 @@
+name: Android
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    name: ساخت APK اندروید
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: نصب Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
+      - name: نصب Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: نصب Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: نصب وابستگی‌ها
+        run: bun install --frozen-lockfile
+
+      - name: آماده‌سازی پوستهٔ اندروید (در صورت نبود)
+        # پوشهٔ android/ پس از `cap add android` ساخته می‌شود؛ در CI اگر مخزن
+        # آن را نداشته باشد خودکار ساخته و sync می‌شود.
+        run: |
+          if [ ! -d android ]; then
+            bun x cap add android
+          fi
+
+      - name: ساخت خروجی وب
+        env:
+          VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
+        run: bun run build
+
+      - name: همگام‌سازی با پوستهٔ بومی
+        run: bun x cap sync android
+
+      - name: ساخت APK دیباگ
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: بارگذاری APK به Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: android/app/build/outputs/apk/debug/app-debug.apk
+          # برای انتشار عمومی، امضای release در گام بعدی اضافه می‌شود
+          append_body: true

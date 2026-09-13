@@ -1,0 +1,17 @@
+{
+  "name": "دفتر من",
+  "short_name": "دفتر من",
+  "description": "دفتر شخصی درآمد و هزینه با نمودار دسته‌بندی‌ها",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FBFAF7",
+  "theme_color": "#FBFAF7",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

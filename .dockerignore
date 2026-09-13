@@ -1,0 +1,12 @@
+node_modules
+dist
+.git
+.github
+.vscode
+.idea
+docs
+*.md
+.env*
+!.env.example
+android/
+src-tauri/
