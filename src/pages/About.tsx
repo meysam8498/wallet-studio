@@ -96,13 +96,13 @@ export default function About() {
   const navigate = useNavigate();
   const [signingOut, setSigningOut] = useState(false);
 
-  const backTo = isAuthenticated ? "/dashboard" : "/";
+  const backTo = isAuthenticated ? "/dashboard" : "/auth";
 
   const handleSignOut = async () => {
     setSigningOut(true);
     try {
       await signOut();
-      navigate("/");
+      navigate("/auth");
     } finally {
       setSigningOut(false);
     }
