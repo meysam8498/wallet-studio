@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    name: تایپ‌چک، لینت و ساخت
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: نصب Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: نصب وابستگی‌ها
+        run: bun install --frozen-lockfile
+
+      - name: تایپ‌چک
+        # کدژن Convex به استقرار نیاز دارد؛ در CI همان استاب‌های مخزن
+        # (src/convex/_generated) به‌عنوان مرجع تایپ استفاده می‌شوند.
+        run: bun x tsc -b --noEmit
+
+      - name: لینت
+        run: bun run lint
+
+      - name: ساخت خروجی
+        env:
+          # آدرس واقعی بک‌اند در زمان ساخت لازم است ولی مقدارش روی خروجی
+          # JS اثر عملکردی ندارد — فقط رشتهٔ اتصال کلاینت است.
+          VITE_CONVEX_URL: https://placeholder.convex.cloud
+        run: bun run build

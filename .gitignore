@@ -1,0 +1,45 @@
+# --- توکن‌ها و رمزها (هرگز کامیت نشوند) ---
+.env.local
+android/key.properties
+android/keystore.jks
+*.jks
+*.keystore
+
+# --- خروجی‌های ساخت ---
+node_modules
+dist
+release-artifacts
+
+# --- کد‌سازهای محلی Convex ---
+
+# --- پوسته‌های بومی: خروجی‌ها و ابزارهای محلی ---
+src-tauri/target/
+src-tauri/gen/
+android/.gradle/
+android/build/
+android/app/build/
+android/app/src/main/assets/capacitor.config.json
+android/local.properties
+android/.idea/
+android/capacitor-cordova-android-plugins/
+
+# --- سیستم‌عامل و ابزارها ---
+.DS_Store
+Thumbs.db
+
+# --- فایل‌های موقت این مخزن ---
+_dev.log
+_convex.log
+_vite.log
+_tauri_build.log
+_gradlew_warm.log
+_apk_build.log
+_winsdk.log
+_sdklic.log
+_sdk.sh
+_appicon.png
+_makeicon.ps1
+
+# --- ردپاهای ابزار محلی ---
+.freebuff/
+android/app/src/main/assets/public/

@@ -1,0 +1,86 @@
+name: Docker
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    name: ساخت و انتشار تصویر داکر
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: نصب Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: استقرار بک‌اند (در صورت تنظیم کلید)
+        # اختیاری: اگر CONVEX_DEPLOY_KEY تنظیم شده باشد، بک‌اند همزمان منتشر
+        # می‌شود؛ در غیر این صورت فقط تصویر فرانت‌اند ساخته می‌شود.
+        if: env.CONVEX_DEPLOY_KEY != ''
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+        run: bun x convex deploy --yes
+
+      - name: ساخت تصویر داکر
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          load: true
+          build-args: |
+            VITE_CONVEX_URL=${{ vars.VITE_CONVEX_URL }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: ورود به رجیستری GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: انتشار تصویر
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            VITE_CONVEX_URL=${{ vars.VITE_CONVEX_URL }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          labels: |
+            org.opencontainers.image.title=دفتر من
+            org.opencontainers.image.description=حسابداری شخصی با تقویم شمسی و همگام‌سازی زنده
+            org.opencontainers.image.version=${{ github.ref_name }}
+
+  release:
+    name: ساخت Release در گیت‌هاب
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: انتشار Release از برچسب
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body: |
+            تصویر داکر این نسخه:
+            ```
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+            ```
+            راهنمای کامل اجرا: [`docs/DOCKER.md`](./docs/DOCKER.md)
