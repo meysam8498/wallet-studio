@@ -216,3 +216,72 @@ body {
     font-size: 15px;
   }
 }
+
+/* تختهٔ کارت‌های داشبورد (v2.4.0): masonry دوستونه با CSS columns؛
+   کارت‌ها شکسته نمی‌شوند و فاصلهٔ عمودی ستون‌ها حفظ می‌شود */
+.board-columns > * {
+  break-inside: avoid;
+  margin-bottom: 1.5rem;
+  display: block;
+}
+@media (min-width: 768px) {
+  .board-columns {
+    column-fill: balance;
+  }
+}
+
+/* ---------- پرداخت گرافیکی (v2.4.0) ----------
+   عمق ملایم روی کارت‌ها، اسکرول‌بار باریک هم‌رنگ، و انتقال‌های نرم.
+   همه بر اساس DESIGN.md: حاشیهٔ مویی، بدون سایهٔ سنگین، حرکت کم اما روان. */
+@media (hover: hover) {
+  .board-columns > *:hover {
+    border-color: color-mix(in oklch, var(--foreground) 14%, var(--border));
+  }
+}
+.board-columns > * {
+  transition: border-color 200ms ease;
+}
+
+/* اسکرول‌بار باریک و هم‌رنگ تم — هم‌افقی و هم‌عمودی */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, var(--foreground) 18%, transparent) transparent;
+}
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--foreground) 18%, transparent);
+  border-radius: 3px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ریل حساب‌ها: محو شدن لبهٔ چپ/راست که «قابل اسکرول بودن» را نشان می‌دهد */
+.accounts-rail {
+  mask-image: linear-gradient(to left, transparent 0, black 16px, black calc(100% - 16px), transparent 100%);
+}
+
+/* حرکت ورود کارت‌ها — فقط جایی که کاربر حرکت را تحمل می‌کند */
+@media (prefers-reduced-motion: no-preference) {
+  .board-columns > * {
+    animation: card-in 360ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .board-columns > *:nth-child(2) { animation-delay: 40ms; }
+  .board-columns > *:nth-child(3) { animation-delay: 80ms; }
+  .board-columns > *:nth-child(4) { animation-delay: 120ms; }
+  .board-columns > *:nth-child(5) { animation-delay: 160ms; }
+  .board-columns > *:nth-child(6) { animation-delay: 200ms; }
+}
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
