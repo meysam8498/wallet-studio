@@ -1,6 +1,6 @@
 [package]
 name = "daftaram"
-version = "2.2.0"
+version = "2.2.1"
 description = "دفتر من — اپ حسابداری شخصی با تقویم شمسی"
 authors = ["میثم ایجادی <M.Ijadi@Hotmail.com>"]
 license = "MIT"

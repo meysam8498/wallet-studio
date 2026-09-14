@@ -79,13 +79,13 @@
 # ساخت با آدرس بک‌اند
 docker build \
   --build-arg VITE_CONVEX_URL="https://<YOUR-CONVEX>.convex.cloud" \
-  -t meysam8498/daftaram:2.1.0 \
+  -t meysam8498/daftaram:2.2.1 \
   -t meysam8498/daftaram:latest \
   .
 
 # بررسی تصویر
 docker images | grep daftaram
-docker inspect meysam8498/daftaram:2.1.0 --format '{{.Config.Healthcheck}}'
+docker inspect meysam8498/daftaram:2.2.1 --format '{{.Config.Healthcheck}}'
 ```
 
 نکته‌ها:
@@ -105,7 +105,7 @@ docker run -d \
   --name daftar-web \
   -p 8080:80 \
   --restart unless-stopped \
-  meysam8498/daftaram:2.1.0
+  meysam8498/daftaram:2.2.1
 
 # بررسی سلامت
 docker ps --filter name=daftar-web
@@ -127,7 +127,7 @@ curl -I http://localhost:8080
 ```yaml
 services:
   web:
-    image: ghcr.io/meysam8498/daftaram:2.1.0   # یا ساخت محلی با build
+    image: ghcr.io/meysam8498/daftaram:2.2.1   # یا ساخت محلی با build
     build:
       context: .
       args:
@@ -162,11 +162,11 @@ docker compose down        # توقف و حذف کانتینر
 echo "<PAT>" | docker login ghcr.io -u meysam8498 --password-stdin
 
 # تگ‌گذاری
-docker tag meysam8498/daftaram:2.1.0 ghcr.io/meysam8498/daftaram:2.1.0
-docker tag meysam8498/daftaram:2.1.0 ghcr.io/meysam8498/daftaram:latest
+docker tag meysam8498/daftaram:2.2.1 ghcr.io/meysam8498/daftaram:2.2.1
+docker tag meysam8498/daftaram:2.2.1 ghcr.io/meysam8498/daftaram:latest
 
 # انتشار
-docker push ghcr.io/meysam8498/daftaram:2.1.0
+docker push ghcr.io/meysam8498/daftaram:2.2.1
 docker push ghcr.io/meysam8498/daftaram:latest
 ```
 
@@ -177,12 +177,12 @@ docker push ghcr.io/meysam8498/daftaram:latest
 
 ```bash
 docker login
-docker tag meysam8498/daftaram:2.1.0 meysam8498/daftaram:2.1.0
-docker push meysam8498/daftaram:2.1.0
+docker tag meysam8498/daftaram:2.2.1 meysam8498/daftaram:2.2.1
+docker push meysam8498/daftaram:2.2.1
 ```
 
 برای استفاده از داکر هاب در `docker-compose.yml` مقدار `image` را به
-`meysam8498/daftaram:2.1.0` تغییر دهید.
+`meysam8498/daftaram:2.2.1` تغییر دهید.
 
 ---
 
@@ -251,7 +251,7 @@ docker run -d \
   -v /srv/daftar/nginx.conf:/etc/nginx/conf.d/default.conf:ro \
   -v /srv/daftar/certs:/etc/nginx/certs:ro \
   --restart unless-stopped \
-  meysam8498/daftaram:2.1.0
+  meysam8498/daftaram:2.2.1
 ```
 
 معمار پیشنهادی پشت پروکسی معکوس (Caddy یا Traefik با TLS خودکار):
@@ -259,7 +259,7 @@ docker run -d \
 ```bash
 docker run -d --name daftar-web \
   -p 127.0.0.1:8080:80 --restart unless-stopped \
-  meysam8498/daftaram:2.1.0
+  meysam8498/daftaram:2.2.1
 # Caddyfile:
 #   daftar.example.com {
 #     reverse_proxy 127.0.0.1:8080
@@ -279,11 +279,11 @@ docker run -d --name daftar-web \
 docker rm -f daftar-web
 
 # به‌روزرسانی به نسخهٔ تازه
-docker pull ghcr.io/meysam8498/daftaram:2.1.0
+docker pull ghcr.io/meysam8498/daftaram:2.2.1
 docker rm -f daftar-web
 docker run -d --name daftar-web -p 8080:80 \
   --restart unless-stopped \
-  ghcr.io/meysam8498/daftaram:2.1.0
+  ghcr.io/meysam8498/daftaram:2.2.1
 
 # پاک‌سازی تصاویر قدیمی و لایه‌های بلااستفاده
 docker image prune -f
@@ -341,7 +341,7 @@ docker compose up -d    # بازسازی کانتینر با تصویر تازه
 
 ### نسخه‌های بعدی
 - [ ] v2.1.0 — برگرداندن دادهٔ JSON پشتیبان (بازگردانی کامل)
-- [ ] v2.2.0 — حالت آفلاین PWA (سرویس‌ورکر + کش)
+- [ ] v2.2.1 — حالت آفلاین PWA (سرویس‌ورکر + کش)
 
 خروجی‌های بومی (اندروید و ویندوز) گردش‌کار داکری خودشان را دارند:
 [`NATIVE.md`](./NATIVE.md).

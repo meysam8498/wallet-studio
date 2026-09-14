@@ -1,6 +1,6 @@
 services:
   web:
-    image: meysam8498/daftaram:2.1.0
+    image: meysam8498/daftaram:2.2.1
     build:
       context: .
       args:

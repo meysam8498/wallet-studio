@@ -12,7 +12,7 @@
  *   patch  — رفع اشکال یا بهبود جزئی
  */
 
-export const VERSION = "2.2.0";
+export const VERSION = "2.2.1";
 
 export const RELEASE_DATE = "۱۴۰۵/۰۶/۲۳";
 
@@ -41,6 +41,16 @@ export const CHANGE_TYPE_COLORS: Record<ChangeType, string> = {
 };
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "2.2.1",
+    date: "۱۴۰۵/۰۶/۲۳",
+    title: "لینک‌های همیشه‌به‌روز دانلود",
+    changes: [
+      { type: "added", text: "دکمه‌های دانلود اندروید و ویندوز در بخش «درباره» اکنون همیشه تازه‌ترین نسخهٔ منتشرشده را می‌دهند — بدون نیاز به به‌روزرسانی برنامه" },
+      { type: "changed", text: "همگام‌سازی خودکار توضیحات گیت‌هاب و داکر هاب با هر انتشار — از فایل‌های نسخه‌دار مخزن" },
+      { type: "fixed", text: "پاک‌سازی آخرین نام ابزار میزبان از فایل‌های مخزن" },
+    ],
+  },
   {
     version: "2.2.0",
     date: "۱۴۰۵/۰۶/۲۳",
@@ -224,22 +234,28 @@ export type DownloadItem = {
   note?: string;
 };
 
+// لینک‌های همیشگی: گیت‌هاب «releases/latest/download» را همیشه به آخرین
+// Release منتشرشده هدایت می‌کند؛ فایل‌های «-latest» در هر انتشار کنار
+// فایل‌های نسخه‌دار بارگذاری می‌شوند تا این لینک‌ها هرگز کهنه نشوند.
+const LATEST_BASE =
+  "https://github.com/meysam8498/wallet-studio/releases/latest/download";
+
 export const DOWNLOADS: DownloadItem[] = [
   {
     id: "android",
     platform: "android",
     label: "اندروید (APK)",
     version: VERSION,
-    href: undefined,
-    note: "ساخت خودکار با هر برچسب — از Releases گیت‌هاب",
+    href: `${LATEST_BASE}/Daftaram-latest-android.apk`,
+    note: "همیشه تازه‌ترین نسخه",
   },
   {
     id: "windows",
     platform: "windows",
-    label: "ویندوز (MSI/EXE)",
+    label: "ویندوز (EXE)",
     version: VERSION,
-    href: undefined,
-    note: "ساخت خودکار با هر برچسب — از Releases گیت‌هاب",
+    href: `${LATEST_BASE}/Daftaram-latest-windows-x64-setup.exe`,
+    note: "همیشه تازه‌ترین نسخه",
   },
 ];
 
