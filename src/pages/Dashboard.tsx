@@ -54,6 +54,10 @@ import {
 } from "@/components/ui/chart";
 import { Pie, PieChart, Cell } from "recharts";
 import {
+  WidgetSettingsMenu,
+  useWidgetState,
+} from "@/components/WidgetBoard";
+import {
   ArrowLeftRight,
   CalendarDays,
   ChevronLeft,
@@ -798,6 +802,12 @@ export default function Dashboard() {
   const [deletingTx, setDeletingTx] = useState<Transaction | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<Transaction | null>(null);
 
+  // چیدمان شخصی کارت‌های داشبورد — ترتیب/پنهان‌سازی روی همین دستگاه (v2.4.0)
+  const widgets = useWidgetState();
+  // دفتر فعال (شخصی یا خانوار) — برای نشانِ انتخاب دفتر در سربرگ
+  const myHousehold = useQuery(api.households.myHousehold);
+  const activeLedgerName = myHousehold ? myHousehold.name : "دفتر شخصی";
+
   const exportAllJson = () => {
     if (
       !confirm(
@@ -1114,7 +1124,18 @@ export default function Dashboard() {
         {/* ردیف عنوان */}
         <div className="flex flex-col gap-6 pt-8 pb-6 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
-            <p className="eyebrow">دفتر خصوصی</p>
+            <button
+              type="button"
+              onClick={() => setHouseholdOpen(true)}
+              title="مدیریت دفترها — انتخاب یا ویرایش خانوار"
+              className="group inline-flex max-w-full items-center gap-1.5 rounded-[4px] border border-transparent px-1.5 py-0.5 text-left transition-colors hover:border-border hover:bg-accent"
+            >
+              <p className="eyebrow shrink-0">دفتر:</p>
+              <p className="truncate text-[11px] font-medium text-foreground/80 group-hover:text-foreground">
+                {activeLedgerName}
+              </p>
+              <Pencil className="size-2.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+            </button>
             <h1 className="mt-2 font-display text-3xl font-medium sm:text-4xl">
               {jMonthLabel(monthJ.jy, monthJ.jm)}
             </h1>
@@ -1202,6 +1223,13 @@ export default function Dashboard() {
             <Users className="size-3.5" />
             خانوار
           </Button>
+          <WidgetSettingsMenu
+            order={widgets.order}
+            hidden={widgets.hidden}
+            onMove={widgets.move}
+            onToggle={widgets.toggleHidden}
+            onReset={widgets.reset}
+          />
           <Button
             variant="outline"
             size="sm"
@@ -1229,7 +1257,7 @@ export default function Dashboard() {
         ) : (
           <>
             {/* نوار حساب‌ها */}
-            <div className="mb-6 flex gap-3 overflow-x-auto pb-1">
+            <div className="accounts-rail mb-6 flex gap-3 overflow-x-auto pb-1">
               <div className="min-w-36 shrink-0 rounded-[4px] border bg-card px-4 py-3">
                 <p className="eyebrow">موجودی کل</p>
                 <p className="mt-1.5 font-display text-lg tabular-nums">
@@ -1285,11 +1313,11 @@ export default function Dashboard() {
               ))}
             </div>
 
-            {/* شبکهٔ اصلی */}
-            <div className="mt-10 grid items-start gap-6 lg:grid-cols-[1.15fr_1fr]">
-              {/* ستون گالری */}
-              <div className="grid gap-6">
-                <Card className="gap-5 rounded-[4px] border-border/70 py-6 shadow-none">
+            {/* تختهٔ کارت‌ها — masonry دوستونه با ترتیب شخصی (v2.4.0):
+                کارت‌ها در دو ستون متوازن جریان می‌یابند؛ نه «مثل قطار» زیر هم،
+                نه نصف صفحهٔ خالی. ترتیب از منوی «چیدمان» قابل تغییر است. */}
+            <div className="board-columns mt-10 columns-1 gap-6 md:columns-2">
+                <Card className="break-inside-avoid gap-5 rounded-[4px] border-border/70 py-6 shadow-none">
                   <CardHeader className="px-6">
                     <CardAction>
                       <Tabs
@@ -1423,7 +1451,7 @@ export default function Dashboard() {
                 </Card>
 
                 {/* نمای سالانه */}
-                <Card className="gap-4 rounded-[4px] border-border/70 py-6 shadow-none">
+                <Card className="break-inside-avoid gap-4 rounded-[4px] border-border/70 py-6 shadow-none">
                   <CardHeader className="px-6">
                     <CardTitle className="font-display text-xl">
                       نمای سالانه — سال {faDigits(yearSums.jy)}
@@ -1497,7 +1525,7 @@ export default function Dashboard() {
                 </Card>
 
                 {/* روند ۶ ماه */}
-                <Card className="gap-4 rounded-[4px] border-border/70 py-6 shadow-none">
+                <Card className="break-inside-avoid gap-4 rounded-[4px] border-border/70 py-6 shadow-none">
                   <CardHeader className="px-6">
                     <CardTitle className="font-display text-xl">
                       روند شش‌ماهه
@@ -1513,7 +1541,7 @@ export default function Dashboard() {
 
                 {/* انتقال‌های میان حساب‌ها */}
                 {monthTransfers.length > 0 && (
-                  <Card className="gap-4 rounded-[4px] border-border/70 py-6 shadow-none">
+                  <Card className="break-inside-avoid gap-4 rounded-[4px] border-border/70 py-6 shadow-none">
                     <CardHeader className="px-6">
                       <CardTitle className="font-display text-xl">
                         انتقال‌های این ماه
@@ -1552,7 +1580,7 @@ export default function Dashboard() {
                 )}
 
                 {/* بودجه‌ها */}
-                <Card className="gap-4 rounded-[4px] border-border/70 py-6 shadow-none">
+                <Card className="break-inside-avoid gap-4 rounded-[4px] border-border/70 py-6 shadow-none">
                   <CardHeader className="px-6">
                     <CardAction>
                       <Button
@@ -1623,11 +1651,10 @@ export default function Dashboard() {
                     )}
                   </CardContent>
                 </Card>
-              </div>
 
-              {/* ستون تراکنش‌ها */}
-              <Card className="gap-0 rounded-[4px] border-border/70 py-0 shadow-none">
-                <CardHeader className="gap-3 border-b px-5 py-5">
+                {/* تراکنش‌ها */}
+                <Card className="min-w-0 break-inside-avoid gap-0 rounded-[4px] border-border/70 py-0 shadow-none">
+                <CardHeader className="max-sm:px-4 gap-3 border-b px-5 py-5">
                   <CardAction className="max-sm:col-start-1 max-sm:row-start-2 max-sm:w-full max-sm:justify-self-stretch">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <div className="relative">
@@ -1684,6 +1711,7 @@ export default function Dashboard() {
                       </p>
                     </div>
                   ) : (
+                    <div className="max-sm:overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow className="hover:bg-transparent">
@@ -1700,7 +1728,7 @@ export default function Dashboard() {
                           return (
                             <TableRow key={t._id} className="group">
                               <TableCell className="py-3 pr-5 align-top">
-                                <p className="whitespace-nowrap text-sm tabular-nums">
+                                <p className="text-sm tabular-nums">
                                   {jDateLabel(t.date)}
                                 </p>
                                 {t.note && (
@@ -1792,6 +1820,7 @@ export default function Dashboard() {
                         })}
                       </TableBody>
                     </Table>
+                    </div>
                   )}
                 </div>
               </Card>
