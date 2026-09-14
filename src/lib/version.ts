@@ -12,9 +12,9 @@
  *   patch  — رفع اشکال یا بهبود جزئی
  */
 
-export const VERSION = "2.1.0";
+export const VERSION = "2.2.0";
 
-export const RELEASE_DATE = "۱۴۰۵/۰۶/۲۲";
+export const RELEASE_DATE = "۱۴۰۵/۰۶/۲۳";
 
 export type ChangeType = "added" | "changed" | "fixed" | "security";
 
@@ -41,6 +41,18 @@ export const CHANGE_TYPE_COLORS: Record<ChangeType, string> = {
 };
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "2.2.0",
+    date: "۱۴۰۵/۰۶/۲۳",
+    title: "ورود با گذرواژه — صفر تنظیمات",
+    changes: [
+      { type: "added", text: "ورود با ایمیل و گذرواژه — بدون تأیید ایمیل، بدون SMTP و بدون هیچ سرویس بیرونی" },
+      { type: "changed", text: "داده‌ها روی استقرار ابری رایگان می‌مانند؛ همهٔ دستگاه‌ها با یک حساب، دفتر یکسانی می‌بینند و هیچ پیکربندی‌ای لازم نیست" },
+      { type: "security", text: "گذرواژه‌ها با الگوریتم Scrypt در خود بک‌اند هش می‌شوند و هرگز خام ذخیره نمی‌شوند" },
+      { type: "changed", text: "نمایش/پنهان‌کردن گذرواژه در صفحهٔ ورود و پیام‌های خطای فارسی روشن برای حالت‌های رایج" },
+      { type: "changed", text: "ورود مهمان همچنان برای آزمایش سریع بدون حساب در دسترس است" },
+    ],
+  },
   {
     version: "2.1.0",
     date: "۱۴۰۵/۰۶/۲۲",

@@ -1319,7 +1319,7 @@ export default function Dashboard() {
                     <CardDescription>
                       {series.grand > 0
                         ? `${formatMoneyIn(series.grand, unit)} در ${faDigits(series.rows.length)} دسته`
-                        : "برای این ماه هنوز چیزی روی دیوار نیست"}
+                        : "برای این ماه هنوز سندی ثبت نشده است"}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="px-6">
@@ -1411,10 +1411,10 @@ export default function Dashboard() {
                       </>
                     ) : (
                       <div className="grid place-items-center gap-2 rounded-[4px] border border-dashed py-14 text-center">
-                        <p className="font-display text-lg">دیواری خالی</p>
+                        <p className="font-display text-lg">دفتر خالی</p>
                         <p className="max-w-xs text-sm text-muted-foreground">
                           نخستین تراکنش {scope === "expense" ? "هزینه" : "درآمد"} خود
-                          را ثبت کنید تا اینجا قاب شود.
+                          را ثبت کنید تا در دفتر بنشیند.
                         </p>
                       </div>
                     )}

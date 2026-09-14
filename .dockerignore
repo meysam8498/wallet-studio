@@ -1,5 +1,7 @@
 node_modules
 dist
+# استثنا برای Dockerfile.local (بسته‌بندی از خروجی آمادهٔ محلی)
+!dist/
 .git
 .github
 .vscode

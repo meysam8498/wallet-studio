@@ -1,0 +1,15 @@
+# ---------- ساخت محلی از خروجی آماده ----------
+# همین خروجیِ «vite build» را که روی سیستم خودتان ساخته شده است بسته‌بندی
+# می‌کند — بدون هیچ نصب وابستگی داخل کانتینر. برای ساخت کامل از منبع،
+# Dockerfile اصلی به کار می‌رود (در CI گیت‌هاب استفاده می‌شود).
+FROM nginx:1.27-alpine
+RUN rm /etc/nginx/conf.d/default.conf
+COPY dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+EXPOSE 80
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+  CMD wget -qO- http://localhost/ >/dev/null || exit 1
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["nginx", "-g", "daemon off;"]

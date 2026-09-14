@@ -4,8 +4,12 @@ FROM node:22-alpine AS build
 WORKDIR /app
 
 # نصب وابستگی‌ها با bun (قفل نسخهٔ bun.lock) — لایهٔ کش‌شونده
+# رجیستری npm.js در برخی شبکه‌ها فیلتر است؛ mirror باز را پیش‌فرض می‌کنیم
+# (در CI گیت‌هاب هم همین mirror بدون مشکل پاسخ می‌دهد).
 COPY package.json bun.lock ./
-RUN npm install -g bun@1 && bun install --frozen-lockfile
+RUN npm config set registry https://registry.npmmirror.com \
+  && npm install -g bun@1 \
+  && bun install --frozen-lockfile
 
 # ساخت خروجی ایستا — VITE_CONVEX_URL در زمان build تزریق می‌شود
 COPY . .

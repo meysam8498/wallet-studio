@@ -10,8 +10,6 @@
 
 import type * as accounts from "../accounts.js";
 import type * as auth from "../auth.js";
-import type * as auth_emailOtp from "../auth/emailOtp.js";
-import type * as auth_sendOtpEmail from "../auth/sendOtpEmail.js";
 import type * as debts from "../debts.js";
 import type * as households from "../households.js";
 import type * as http from "../http.js";
@@ -29,8 +27,6 @@ import type {
 declare const fullApi: ApiFromModules<{
   accounts: typeof accounts;
   auth: typeof auth;
-  "auth/emailOtp": typeof auth_emailOtp;
-  "auth/sendOtpEmail": typeof auth_sendOtpEmail;
   debts: typeof debts;
   households: typeof households;
   http: typeof http;
