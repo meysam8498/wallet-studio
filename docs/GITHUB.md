@@ -157,13 +157,38 @@ git push origin main --follow-tags
 
 گردش‌کار docker.yml خودش یک Release با یادداشت خودکار می‌سازد. برای ویرایش
 متن: Releases → Draft منتشرشده → Edit — توضیح برگرفته از `CHANGELOG.md`.
-اگر خروجی بومی (APK/exe) دارید، فایل‌ها را به همین Release ضمیمه کنید؛
-همان فایل‌ها در صفحهٔ «درباره و نسخه‌ها» برنامه قابل دانلود می‌شوند.
+اگر خروجی بومی (APK/exe) دارید، این چهار فایل را ضمیمه کنید:
 
-### ۵. تصویر داکر
+- `Daftaram-X.Y.Z-android.apk` — نسخهٔ نسخه‌دار
+- `Daftaram-X.Y.Z-windows-x64-setup.exe`
+- `Daftaram-latest-android.apk` — **همیشه ضمیمه شود**: لینک همیشگی
+  «آخرین نسخه» که دکمه‌های دانلود بخش «درباره» از آن استفاده می‌کنند
+- `Daftaram-latest-windows-x64-setup.exe`
+
+فایل‌های `-latest` با هر انتشار جایگزین می‌شوند و لینک
+`releases/latest/download/…` همیشه به تازه‌ترین Release هدایت می‌کند.
+
+### ۵. توضیحات رجیستری‌ها — همیشه با هر انتشار
+
+توضیح کوتاه مخزن گیت‌هاب و صفحهٔ داکر هاب بخشی از مخزن است و باید همراه
+هر نسخه به‌روز شود:
+
+```bash
+# ۱) متن‌ها را ویرایش کنید:
+#    docs/GITHUB-ABOUT.txt   (توضیح کوتاه مخزن)
+#    docs/DOCKER-HUB.md      (صفحهٔ کامل داکر هاب)
+# ۲) اعمال در گیت‌هاب (توضیح + صفحهٔ اصلی):
+gh api -X PATCH repos/meysam8498/wallet-studio \
+  -f description="$(cat docs/GITHUB-ABOUT.txt)" \
+  -f homepage="https://github.com/meysam8498/wallet-studio/releases/latest"
+# ۳) متن داکر هاب را از docs/DOCKER-HUB.md در Description صفحهٔ Repository
+#    کپی کنید (Docker Hub → repo → Description → Edit).
+```
+
+### ۶. تصویر داکر
 
 خودکار در GHCR منتشر می‌شود:
-`ghcr.io/meysam8498/daftaram:v2.1.0` و `:latest`.
+`ghcr.io/meysam8498/daftaram:v2.2.1` و `:latest`.
 راهنمای pull و اجرا: [`DOCKER.md`](./DOCKER.md#اجرای-محلی).
 
 ---
