@@ -1,5 +1,0 @@
-$ vite preview --port "4173" --strictPort
-  [32m➜[39m  [1mLocal[22m:   [36mhttp://localhost:[1m4173[22m/[39m
-  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.3.81:[1m4173[22m/[39m
-  [32m➜[39m  [1mNetwork[22m: [36mhttp://172.23.224.1:[1m4173[22m/[39m
-  [32m➜[39m  [1mNetwork[22m: [36mhttp://192.168.176.1:[1m4173[22m/[39m
