@@ -41,7 +41,6 @@ _appicon.png
 _makeicon.ps1
 
 # --- ردپاهای ابزار محلی ---
-.freebuff/
 android/app/src/main/assets/public/
 _convex_login.log
 _docker_build.log

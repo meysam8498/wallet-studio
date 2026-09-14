@@ -4,7 +4,7 @@
 ثبت سادهٔ درآمد و هزینه، حساب‌ها، طلب و بدهی و بودجهٔ ماهانه.
 
 - **سازنده:** میثم ایجادی — توسعه‌دهندهٔ مستقل
-- **نسخهٔ فعلی:** 2.1.0 — تاریخچهٔ کامل در [`docs/CHANGELOG.md`](./docs/CHANGELOG.md)
+- **نسخهٔ فعلی:** 2.2.1 — تاریخچهٔ کامل در [`docs/CHANGELOG.md`](./docs/CHANGELOG.md)
 - **درباره و نسخه‌ها در خود برنامه:** مسیر `/about`
 
 ## امکانات
@@ -46,7 +46,7 @@ bunx convex dev --once        # استقرار بک‌اند + بازتولید 
 bun run dev
 ```
 
-از نسخهٔ 2.2.0 ورود فقط با ایمیل و گذرواژه انجام می‌شود — SMTP و تأیید
+از نسخهٔ 2.2.1 ورود فقط با ایمیل و گذرواژه انجام می‌شود — SMTP و تأیید
 ایمیل حذف شده‌اند و هیچ تنظیم اضافه‌ای لازم نیست.
 
 بررسی سلامت پیش از انتشار:
@@ -60,8 +60,8 @@ bun x tsc -b --noEmit && bun run lint && bun run build
 راهنمای کامل و نسخه‌به‌نسخه: [`docs/DOCKER.md`](./docs/DOCKER.md)
 
 ```bash
-docker build --build-arg VITE_CONVEX_URL="…" -t meysam8498/daftaram:2.1.0 .
-docker run -d -p 8080:80 --restart unless-stopped meysam8498/daftaram:2.1.0
+docker build --build-arg VITE_CONVEX_URL="…" -t meysam8498/daftaram:2.2.1 .
+docker run -d -p 8080:80 --restart unless-stopped meysam8498/daftaram:2.2.1
 ```
 
 انتشار خودکار روی GHCR با هر برچسب `vX.Y.Z` — پیکربندی در
