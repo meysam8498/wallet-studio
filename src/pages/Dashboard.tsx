@@ -1077,19 +1077,19 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background">
       {/* سربرگ */}
       <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur-sm">
-        <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-3 px-6">
-          <div className="flex items-center gap-2.5">
-            <LedgerMark className="size-7 text-foreground" />
-            <span className="font-display text-lg">دفتر من</span>
+        <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6">
+          <div className="flex min-w-0 items-center gap-2">
+            <LedgerMark className="size-7 shrink-0 text-foreground" />
+            <span className="truncate font-display text-base sm:text-lg">دفتر من</span>
             <Link
               to="/about"
               title="درباره و نسخه‌ها"
-              className="rounded-[3px] border px-1.5 py-0.5 text-[10px] tabular-nums text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+              className="shrink-0 rounded-[3px] border px-1.5 py-0.5 text-[10px] tabular-nums text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
             >
               v{faDigits(VERSION)}
             </Link>
           </div>
-          <span className="mr-auto hidden text-xs text-muted-foreground sm:block">
+          <span className="mr-auto hidden min-w-0 truncate text-xs text-muted-foreground sm:block">
             {user?.email ?? "دفتر خصوصی"}
           </span>
           <button
@@ -1110,12 +1110,12 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-6 pb-24">
+      <main className="mx-auto w-full max-w-6xl px-4 pb-24 sm:px-6">
         {/* ردیف عنوان */}
-        <div className="flex flex-col gap-6 pt-12 pb-6 sm:flex-row sm:items-end sm:justify-between">
-          <div>
+        <div className="flex flex-col gap-6 pt-8 pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
             <p className="eyebrow">دفتر خصوصی</p>
-            <h1 className="mt-2 font-display text-4xl font-medium">
+            <h1 className="mt-2 font-display text-3xl font-medium sm:text-4xl">
               {jMonthLabel(monthJ.jy, monthJ.jm)}
             </h1>
             <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
@@ -1123,7 +1123,7 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex items-center rounded-[4px] border">
+            <div className="flex min-w-0 items-center rounded-[4px] border">
               <button
                 aria-label="ماه قبل"
                 className="grid size-9 place-items-center text-muted-foreground transition-colors hover:text-foreground"
@@ -1218,7 +1218,7 @@ export default function Dashboard() {
             title="پشتیبان‌گیری کامل از همهٔ داده‌ها"
           >
             <HardDriveDownload className="size-3.5" />
-            پشتیبان JSON
+            <span className="hidden sm:inline">پشتیبان JSON</span>
           </Button>
         </div>
 
@@ -1273,9 +1273,10 @@ export default function Dashboard() {
                     <p className="eyebrow">{s.label}</p>
                     <p
                       className={cn(
-                        "mt-2 font-display text-2xl tabular-nums",
+                        "mt-2 truncate font-display text-xl tabular-nums sm:text-2xl",
                         i === 2 && stats.net < 0 && "text-destructive",
                       )}
+                      title={formatMoneyIn(s.value, unit)}
                     >
                       {formatMoneyIn(s.value, unit)}
                     </p>
@@ -1627,8 +1628,8 @@ export default function Dashboard() {
               {/* ستون تراکنش‌ها */}
               <Card className="gap-0 rounded-[4px] border-border/70 py-0 shadow-none">
                 <CardHeader className="gap-3 border-b px-5 py-5">
-                  <CardAction>
-                    <div className="flex items-center gap-1.5">
+                  <CardAction className="max-sm:col-start-1 max-sm:row-start-2 max-sm:w-full max-sm:justify-self-stretch">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <div className="relative">
                         <Search className="absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
                         <Input
