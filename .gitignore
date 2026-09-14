@@ -44,3 +44,4 @@ _makeicon.ps1
 .freebuff/
 android/app/src/main/assets/public/
 _convex_login.log
+_docker_build.log

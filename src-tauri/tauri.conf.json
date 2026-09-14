@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "دفتر من",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "identifier": "com.meysamijadi.daftaram",
   "build": {
     "beforeDevCommand": "bun run dev",
