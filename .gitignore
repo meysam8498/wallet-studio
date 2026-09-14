@@ -44,3 +44,14 @@ _makeicon.ps1
 android/app/src/main/assets/public/
 _convex_login.log
 _docker_build.log
+_probe.log
+_preview_srv.log
+_dashprobe.log
+_vite.log
+_apk_build.log
+_tauri_build.log
+_docker_build.log
+*.png
+!public/**
+!src-tauri/icons/**
+!android/app/src/main/res/**
