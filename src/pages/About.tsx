@@ -112,7 +112,7 @@ export default function About() {
     <div className="flex min-h-screen flex-col bg-background">
       {/* سربرگ */}
       <header className="sticky top-0 z-40 border-b bg-background/85 backdrop-blur-sm">
-        <div className="mx-auto flex h-16 w-full max-w-4xl items-center gap-3 px-6">
+        <div className="mx-auto flex h-14 w-full max-w-4xl items-center gap-2 px-4 sm:h-16 sm:gap-3 sm:px-6">
           <div className="flex items-center gap-2.5">
             <LedgerMark className="size-7 text-foreground" />
             <span className="font-display text-lg">دفتر من</span>
@@ -146,12 +146,12 @@ export default function About() {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-4xl flex-1 px-6 pb-24">
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 pb-24 sm:px-6">
         {/* عنوان */}
         <section className="pt-14 pb-10">
           <p className="eyebrow">درباره و نسخه‌ها</p>
           <div className="mt-3 flex flex-wrap items-center gap-4">
-            <h1 className="font-display text-4xl font-medium">
+            <h1 className="font-display text-3xl font-medium sm:text-4xl">
               دفتر من
             </h1>
             <Badge
@@ -321,7 +321,7 @@ export default function About() {
       </main>
 
       <footer className="border-t">
-        <div className="mx-auto flex w-full max-w-4xl flex-col items-center justify-between gap-2 px-6 py-6 text-xs text-muted-foreground sm:flex-row">
+        <div className="mx-auto flex w-full max-w-4xl flex-col items-center justify-between gap-2 px-4 py-6 text-xs text-muted-foreground sm:flex-row sm:px-6">
           <span>
             دفتر من · نسخهٔ {faDigits(VERSION)} · {CREATOR.name}
           </span>

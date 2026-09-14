@@ -6,8 +6,8 @@ import tseslint from "typescript-eslint";
 import eslintConfigPrettier from "eslint-config-prettier/flat";
 
 export default tseslint.config(
-  // خروجی‌های ساخت و پوسته‌های بومی از تحلیل خارج می‌شوند
-  { ignores: ["dist", "android/**", "src-tauri/**"] },
+  // خروجی‌های ساخت، پوسته‌های بومی و اسکریپت‌های کمکی محلی از تحلیل خارج می‌شوند
+  { ignores: ["dist", "android/**", "src-tauri/**", "_*.ts"] },
   {
     extends: [
       js.configs.recommended,

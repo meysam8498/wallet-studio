@@ -166,8 +166,15 @@
   left: 1rem;
   right: auto;
 }
-[data-slot="input-otp"] {
-  direction: ltr;
+[data-slot="dialog-content"] {
+  /* گفت‌وگوها روی موبایل همه‌جا جا شوند و محتوایشان اسکرول عمودی بگیرد */
+  max-height: min(85dvh, calc(100dvh - 2rem));
+  overflow-y: auto;
+}
+[data-slot="alert-dialog-content"],
+[data-slot="sheet-content"] {
+  max-height: min(90dvh, calc(100dvh - 2rem));
+  overflow-y: auto;
 }
 
 @layer utilities {
@@ -183,5 +190,29 @@
     direction: ltr;
     unicode-bidi: isolate;
     font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ---------- موبایل و وب‌ویو (DESIGN.md) ----------
+   عرض ۳۶۰px کف طراحی است؛ هیچ عنصری نباید اسکرول افقی بسازد.
+   این قواعد کلی، حفاظ‌های سراسری هستند و جزئیات صفحات را نقض نمی‌کنند. */
+html,
+body {
+  /* جلوگیری از سرریز افقی ناشی از رشته‌های طولانی */
+  overflow-x: clip;
+}
+body {
+  /* safe-area برای اندروید لبه‌به‌لبه و iOS آینده */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+/* هر مقدار پولی/عددی داخل ستون‌های تنگ فقط کوتاه می‌شود، نه شکستن چیدمان */
+.tabular-nums {
+  max-width: 100%;
+}
+/* اندازهٔ پایهٔ متن روی موبایل کمی جمع‌تر تا متن‌ها جا شوند */
+@media (max-width: 400px) {
+  html {
+    font-size: 15px;
   }
 }

@@ -121,8 +121,8 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
     <div className="flex min-h-screen flex-col bg-background">
       {/* محتوا */}
       <div className="flex flex-1 items-center justify-center">
-        <div className="flex h-full flex-col items-center justify-center">
-          <Card className="min-w-[350px] border pb-0 shadow-none">
+        <div className="flex h-full w-full max-w-sm flex-col items-center justify-center px-4">
+          <Card className="w-full max-w-sm border pb-0 shadow-none">
             <CardHeader className="text-center">
               <div className="flex justify-center">
                 <button
