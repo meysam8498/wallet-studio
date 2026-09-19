@@ -87,6 +87,8 @@ export const myHousehold = query({
       _id: mine._id,
       name: mine.name,
       ownerId: mine.ownerId,
+      // کد دعوتِ فعال فقط برای مالک — تا عضو آن را نبیند/نکپی کند
+      inviteCode: mine.ownerId === userId ? (mine.inviteCode ?? null) : null,
       isOwner: mine.ownerId === userId,
       members: members.map((m) => ({
         ...m,

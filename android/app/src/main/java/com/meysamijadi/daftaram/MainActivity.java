@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.webkit.WebView;
 import android.webkit.WebSettings;
 import com.getcapacitor.BridgeActivity;
+import com.meysamijadi.daftaram.sms.SmsListenerPlugin;
 
 /**
  * MainActivity — پوستهٔ اندروید «دفتر من».
@@ -13,6 +14,9 @@ import com.getcapacitor.BridgeActivity;
  * چیدمان ۳۶۰px به‌هم می‌ریزد. با setUseWideViewPort(false) و
  * setLoadWithOverviewMode(false) عرض صفحه با عرض پنجره یکی می‌شود و
  * چیدمان واکنش‌گرای برنامه (کف طراحی ۳۶۰px) همیشه درست می‌ماند.
+ *
+ * پلاگین پیامک بانکی (v2.6.0) همین‌جا ثبت می‌شود تا در پس‌زمینه — بدون
+ * هیچ سرویس دائمی — پیامک‌های بانکی را بگیرد و پیش‌نویس تراکنش بسازد.
  */
 public class MainActivity extends BridgeActivity {
   @Override
@@ -25,5 +29,8 @@ public class MainActivity extends BridgeActivity {
     settings.setLoadWithOverviewMode(false);
     // متن انتخابی با بزرگ‌نمایی سیستم به‌هم نمی‌ریزد؛ چیدمان ثابت می‌ماند
     settings.setTextZoom(100);
+
+    // ثبت پلاگین شنود پیامک بانکی
+    registerPlugin(SmsListenerPlugin.class);
   }
 }

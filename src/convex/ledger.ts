@@ -1,11 +1,14 @@
 import { v } from "convex/values";
-import { mutation, query, QueryCtx } from "./_generated/server";
+import { mutation, query, action, QueryCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { requireOwner, currentUser } from "./ownership";
+import { getAuthUserId } from "@convex-dev/auth/server";
+import { internal } from "./_generated/api";
 import type { ACCOUNT_KINDS } from "./accounts";
+import type { DraftTx } from "./ai";
 
-// Muted editorial palette for category swatches (studio theme).
-const PALETTE = [
+// Muted editorial palette for category swatches — به‌اشتراک‌گذاشته با backup.ts
+export const PALETTE = [
   "#6B7A6F", "#A68A64", "#5C6B7A", "#9C6B5E", "#7A6B8A",
   "#8A8A6B", "#5E8A7A", "#8A5E74", "#6B6B6B", "#B08968",
 ] as const;
@@ -216,6 +219,24 @@ export const createTransaction = mutation({
       note: args.note?.trim() || undefined,
       receipt: args.receipt || undefined,
       updatedAt: Date.now(),
+    });
+  },
+});
+
+/**
+ * دستیار هوشمند — v2.5.0: متن آزاد فارسی را به پیش‌نویس تراکنش تبدیل
+ * می‌کند (زنجیرهٔ Groq → OpenCode → Google → قاعده‌محور در ai.ts).
+ * کلیدها فقط سمت سرورند؛ کلاینت فقط متن می‌فرستد و پیش‌نویس می‌گیرد.
+ * اکشن عمومی است و احراز هویت + سقف طول متن داخل خودش انجام می‌شود.
+ */
+export const parseTransactionProxy = action({
+  args: { text: v.string() },
+  handler: async (ctx, { text }): Promise<DraftTx> => {
+    // فقط کاربرِ واردشده — برای تشخیص به دفتر/دیتابیس نیازی نیست
+    if ((await getAuthUserId(ctx)) === null) throw new Error("ابتدا وارد شوید");
+    if (!text.trim()) throw new Error("متنی برای تشخیص داده نشد");
+    return await ctx.runAction(internal.ai.parseTransaction, {
+      text: text.trim().slice(0, 500),
     });
   },
 });

@@ -1,0 +1,49 @@
+name: Linux
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    name: ساخت بستهٔ لینوکس
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: وابستگی‌های سیستم Tauri
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev \
+            librsvg2-dev patchelf libgtk-3-dev libayatana-appindicator3-dev
+
+      - name: نصب Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: کش Cargo
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: نصب Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: نصب وابستگی‌ها
+        run: bun install --frozen-lockfile
+
+      - name: ساخت بستهٔ AppImage و deb
+        env:
+          VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
+        run: bun x tauri build
+
+      - name: بارگذاری بسته‌ها به Release
+        # AppImage مستقل‌ترین قالب در توزیع‌های گنو/لینوکس است و deb برای
+        # اوبونتو/دبیان. هر دو بدون امضای GPG منتشر می‌شوند.
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            src-tauri/target/release/bundle/appimage/*.AppImage
+            src-tauri/target/release/bundle/deb/*.deb
+          append_body: true

@@ -44,6 +44,7 @@ _makeicon.ps1
 android/app/src/main/assets/public/
 _convex_login.log
 _docker_build.log
+.git-commit-template.txt
 _probe.log
 _preview_srv.log
 _dashprobe.log

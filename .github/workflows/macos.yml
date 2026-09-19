@@ -1,0 +1,50 @@
+name: macOS
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    name: ساخت بستهٔ macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: نصب Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+
+      - name: کش Cargo
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: نصب Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: نصب وابستگی‌ها
+        run: bun install --frozen-lockfile
+
+      - name: ساخت بستهٔ DMG (Apple Silicon)
+        env:
+          VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
+        run: bun x tauri build --target aarch64-apple-darwin
+
+      - name: ساخت بستهٔ DMG (Intel)
+        env:
+          VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
+        run: bun x tauri build --target x86_64-apple-darwin
+
+      - name: بارگذاری بسته‌ها به Release
+        # بسته‌ها امضای Apple ندارند؛ کاربر هنگام نخستین اجرا از
+        # System Settings → Privacy & Security باید «Open Anyway» را بزند.
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
+            src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg
+          append_body: true

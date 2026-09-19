@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Copy, Crown, LogOut, UserMinus, Users } from "lucide-react";
+import { Copy, Crown, LogOut, RefreshCw, UserMinus, Users } from "lucide-react";
 import { faDigits } from "@/lib/format";
 
 type HouseholdInfo = {
@@ -305,33 +305,55 @@ export function HouseholdDialog({
                   ))}
               </div>
 
-              {/* کد دعوت — فقط مالک */}
+              {/* کد دعوت — v2.6.0: همیشه در دسترس مالک؛ خودکار پس از ساخت نمایش داده می‌شود */}
               {household.isOwner && (
-                <div className="grid gap-2 rounded-[4px] border border-dashed p-4">
-                  <p className="text-sm font-medium">دعوت عضو تازه</p>
-                  <p className="text-xs leading-5 text-muted-foreground">
-                    کد را بسازید و حضوری به خانواده بدهید؛ آن‌ها در همین صفحه کد
-                    را وارد می‌کنند. هر کد تازه، کد قبلی را باطل می‌کند.
-                  </p>
-                  {inviteCode ? (
-                    <div className="flex items-center gap-2" dir="ltr">
-                      <span className="flex-1 rounded-[4px] border bg-secondary/60 py-2 text-center font-display text-xl tracking-[0.5em]">
-                        {inviteCode}
-                      </span>
-                      <Button
-                        size="icon-sm"
-                        variant="outline"
-                        aria-label="کپی کد دعوت"
-                        onClick={() => void copyCode(inviteCode)}
-                      >
-                        <Copy className="size-3.5" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button size="sm" variant="outline" onClick={doNewCode} disabled={busy} className="justify-self-start">
-                      ساخت کد دعوت
+                <div className="grid gap-2 rounded-[4px] border border-primary/30 bg-primary/5 p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium">کد دعوت اعضا</p>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 gap-1 px-2 text-xs text-muted-foreground"
+                      onClick={doNewCode}
+                      disabled={busy}
+                    >
+                      <RefreshCw className="size-3" />
+                      کد تازه
                     </Button>
-                  )}
+                  </div>
+                  <p className="text-xs leading-5 text-muted-foreground">
+                    این کد را به عضو خانواده بدهید؛ او پس از ورود، از دکمهٔ
+                    «دفتر فعال» همین کد را وارد می‌کند و به دفتر مشترک می‌پیوندد.
+                  </p>
+                  <div className="flex items-center gap-2" dir="ltr">
+                    {household.inviteCode ?? inviteCode ? (
+                      <>
+                        <span className="flex-1 rounded-[4px] border bg-secondary/60 py-2.5 text-center font-display text-2xl tracking-[0.5em]">
+                          {household.inviteCode ?? inviteCode}
+                        </span>
+                        <Button
+                          size="icon-sm"
+                          variant="outline"
+                          aria-label="کپی کد دعوت"
+                          onClick={() =>
+                            void copyCode(String(household.inviteCode ?? inviteCode))
+                          }
+                        >
+                          <Copy className="size-3.5" />
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={doNewCode}
+                        disabled={busy}
+                        className="justify-self-start"
+                      >
+                        ساخت کد دعوت
+                      </Button>
+                    )}
+                  </div>
                 </div>
               )}
 

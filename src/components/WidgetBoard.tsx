@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useMutation, useQuery } from "convex/react";
 import { ArrowDown, ArrowUp, GripVertical, LayoutGrid, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { api } from "@/convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { faDigits } from "@/lib/format";
 
@@ -55,6 +57,10 @@ const STORAGE_KEY = "daftaram.widgets.v1";
 
 type SavedState = { order: WidgetId[]; hidden: WidgetId[] };
 
+/**
+ * مقدار اولیهٔ خوش‌بینانه از localStorage — تا پیش از رسیدن پاسخ سرور رابط
+ * با چیدمانِ همین دستگاه رندر شود (سپس سرور در صورت وجود، بازنویسی می‌کند).
+ */
 function loadState(): SavedState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -73,12 +79,50 @@ function loadState(): SavedState {
   }
 }
 
+/**
+ * چیدمان کارت‌ها — v2.6.0 روی سرور (Convex) ذخیره می‌شود تا همهٔ دستگاه‌های
+ * یک کاربر — ویندوز، اندروید، وب — همان ترتیب را ببینند. localStorage فقط
+ * به‌عنوان مقدار اولیهٔ خوش‌بینانه (پیش از رسیدن پاسخ سرور) و مهاجرت کاربران
+ * نسخهٔ ۲.۴ استفاده می‌شود؛ پس از نخستین همگام‌سازی، سرور مرجع یگانه است.
+ */
 export function useWidgetState() {
+  // خوش‌بینانه: همان مقدار محلیِ قبلی تا رابط فلیکر نزند
   const [state, setState] = useState<SavedState>(() => loadState());
+  const serverPrefs = useQuery(api.preferences.getWidgetPrefs);
+  const save = useMutation(api.preferences.setWidgetPrefs);
+
+  // آیا اولین پاسخ سرور آمده؟ تا آن لحظه چیزی به سرور نمی‌نویسیم
+  const serverArrived = serverPrefs !== undefined;
+  const appliedServer = useRef(false);
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [state]);
+    if (serverPrefs === undefined || appliedServer.current) return;
+    appliedServer.current = true;
+    const hasServerData = serverPrefs !== null;
+    if (hasServerData) {
+      // سرور مرجع است — ترتیب محلی را بازنویسی کن
+      const known = new Set<WidgetId>(DEFAULT_ORDER);
+      const order = (serverPrefs.order ?? []).filter((id): id is WidgetId =>
+        known.has(id as WidgetId),
+      );
+      for (const id of DEFAULT_ORDER) if (!order.includes(id)) order.push(id);
+      const hidden = (serverPrefs.hidden ?? []).filter((id): id is WidgetId =>
+        known.has(id as WidgetId),
+      );
+      // ناهمگام‌سازی به رندر بعدی — setState همگام در افکت ممنوع است
+      queueMicrotask(() => setState({ order, hidden }));
+    }
+    // اگر سرور خالی بود، ترتیب محلیِ موجود را بالا بفرست (مهاجرت از ۲.۴)
+    else {
+      void save({ order: [...loadState().order], hidden: [...loadState().hidden] });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverPrefs, save]);
+
+  useEffect(() => {
+    if (!serverArrived || !appliedServer.current) return;
+    void save({ order: [...state.order], hidden: [...state.hidden] });
+  }, [state, serverArrived, save]);
 
   const move = useCallback((id: WidgetId, dir: -1 | 1) => {
     setState((s) => {

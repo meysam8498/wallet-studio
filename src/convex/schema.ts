@@ -128,6 +128,15 @@ const schema = defineSchema(
       // روی فیلد آرایه‌ای، هر عضو یک مدخل شاخص دارد؛ eq روی آن «شاملِ عضو» را می‌دهد
       .index("by_member", ["memberIds"])
       .index("by_invite_code", ["inviteCode"]),
+
+    // ترجیحات دستگاه — v2.6.0: چیدمان کارت‌های داشبورد روی همهٔ دستگاه‌های
+    // یک کاربر (ویندوز، اندروید، وب) یکسان دیده می‌شود؛ یک سند به‌ازای هر کاربر.
+    deviceSettings: defineTable({
+      userId: v.id("users"), // کاربر صاحب ترجیحات — نه مالک دفتر
+      widgetOrder: v.optional(v.array(v.string())),
+      widgetHidden: v.optional(v.array(v.string())),
+      updatedAt: v.number(),
+    }).index("by_user", ["userId"]),
   },
   {
     schemaValidation: false,

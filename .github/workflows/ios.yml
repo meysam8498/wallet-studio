@@ -1,0 +1,54 @@
+name: iOS
+
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    name: ساخت بستهٔ iOS (بدون امضا)
+    # بستهٔ iOS برای نصب روی iPhone به امضای Apple (حساب توسعه‌دهنده) نیاز
+    # دارد؛ این گردش‌کار بستهٔ «امضانشده» می‌سازد تا با ابزار دلخواه
+    # (مثلاً AltStore، Sideloadly یا حساب شخصی در Xcode) امضا و نصب شود.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: نصب Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: نصب وابستگی‌ها
+        run: bun install --frozen-lockfile
+
+      - name: ساخت خروجی وب
+        env:
+          VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
+        run: bun run build
+
+      - name: افزودن پلتفرم iOS
+        run: |
+          if [ ! -d ios ]; then
+            bun x cap add ios
+          fi
+          bun x cap sync ios
+
+      - name: ساخت بستهٔ بدون امضا
+        run: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace -scheme App \
+            -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath build/App.xcarchive archive \
+            CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=NO
+          cd build/App.xcarchive/Products/Applications
+          mkdir -p ../../Payload
+          cp -r App.app ../../Payload/
+          cd ../..
+          zip -r ../../../ios-unsigned.zip Payload
+
+      - name: بارگذاری بسته به Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ios-unsigned.zip
+          append_body: true

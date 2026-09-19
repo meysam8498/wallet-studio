@@ -30,8 +30,9 @@
 | رابط کاربری | React 19 + Vite + Tailwind ۴ + Radix UI |
 | بک‌اند و پایگاه داده | Convex (توابع + جدول‌ها + احراز هویت) |
 | احراز هویت | ایمیل + گذرواژه (هش Scrypt در بک‌اند) — بدون سرویس ایمیل |
+| دستیار هوشمند | زنجیرهٔ جایگزینی OpenRouter → Groq → OpenCode → Google + تجزیه‌گر قاعده‌محور |
 | استقرار | تصویر داکر ایستا (Nginx) یا هر هاست ایستای دیگر |
-| نسخهٔ بومی | اندروید با Capacitor · ویندوز با Tauri |
+| نسخهٔ بومی | اندروید با Capacitor · ویندوز/مک/لینوکس با Tauri · iOS با Capacitor |
 
 پروژه به هیچ پلتفرم میزبانی اپی وابسته نیست؛ کل مخزن مستقل است و روی هر
 سرور یا رجیستری‌ای قابل انتشار.
@@ -49,6 +50,16 @@ bun run dev
 از نسخهٔ 2.4.0 ورود فقط با ایمیل و گذرواژه انجام می‌شود — SMTP و تأیید
 ایمیل حذف شده‌اند و هیچ تنظیم اضافه‌ای لازم نیست.
 
+دستیار هوشمند (از 2.6.0) بدون هیچ کلیدی هم با تجزیه‌گر قاعده‌محور کار
+می‌کند؛ برای تشخیص دقیق‌تر می‌توانید کلیدهای رایگان را در سرور تنظیم کنید
+(هیچ‌کدام در کد نمی‌آیند):
+
+```bash
+bunx convex env set AI_KEY_OPENROUTER "sk-or-…"   # اختیاری — رایگان با مدل‌های :free
+bunx convex env set AI_KEY_GROQ "gsk_…"           # اختیاری
+bunx convex env set AI_KEY_GOOGLE "…"             # اختیاری
+```
+
 بررسی سلامت پیش از انتشار:
 
 ```bash
@@ -60,8 +71,8 @@ bun x tsc -b --noEmit && bun run lint && bun run build
 راهنمای کامل و نسخه‌به‌نسخه: [`docs/DOCKER.md`](./docs/DOCKER.md)
 
 ```bash
-docker build --build-arg VITE_CONVEX_URL="…" -t meysam8498/daftaram:2.4.0 .
-docker run -d -p 8080:80 --restart unless-stopped meysam8498/daftaram:2.4.0
+docker build --build-arg VITE_CONVEX_URL="…" -t meysam8498/daftaram:2.6.0 .
+docker run -d -p 8080:80 --restart unless-stopped meysam8498/daftaram:2.6.0
 ```
 
 انتشار خودکار روی GHCR با هر برچسب `vX.Y.Z` — پیکربندی در

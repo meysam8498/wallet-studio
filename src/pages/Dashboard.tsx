@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -65,12 +65,15 @@ import {
   Download,
   HandCoins,
   HardDriveDownload,
+  HardDriveUpload,
+  MessageSquareText,
   Moon,
   Paperclip,
   Pencil,
   Plus,
   Printer,
   Repeat,
+  Sparkles,
   Search,
   Sun,
   Tags,
@@ -91,6 +94,15 @@ import {
 } from "@/components/AccountsDialog";
 import { DebtsDialog } from "@/components/DebtsDialog";
 import { HouseholdDialog } from "@/components/HouseholdDialog";
+import { AiCaptureDialog } from "@/components/AiCaptureDialog";
+import { SmsCaptureDialog } from "@/components/SmsCaptureDialog";
+import {
+  smsListenerAvailable,
+  checkSmsPermissions,
+  requestSmsPermissions,
+  onBankSms,
+  type BankSmsEvent,
+} from "@/lib/sms-listener";
 import { RecurringDialog, type Subscription } from "@/components/RecurringDialog";
 import { TrendChart } from "@/components/TrendChart";
 import { printMonthReport } from "@/lib/print";
@@ -799,6 +811,7 @@ export default function Dashboard() {
   const [debtsOpen, setDebtsOpen] = useState(false);
   const [subsOpen, setSubsOpen] = useState(false);
   const [householdOpen, setHouseholdOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const [deletingTx, setDeletingTx] = useState<Transaction | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<Transaction | null>(null);
 
@@ -807,6 +820,129 @@ export default function Dashboard() {
   // دفتر فعال (شخصی یا خانوار) — برای نشانِ انتخاب دفتر در سربرگ
   const myHousehold = useQuery(api.households.myHousehold);
   const activeLedgerName = myHousehold ? myHousehold.name : "دفتر شخصی";
+
+  // شنود پیامک بانکی — v2.6.0: فقط روی اندروید و با مجوز کاربر
+  const [smsEvent, setSmsEvent] = useState<BankSmsEvent | null>(null);
+  const [smsOpen, setSmsOpen] = useState(false);
+  const [smsGranted, setSmsGranted] = useState(false);
+  const smsUnsubRef = useRef<(() => void) | null>(null);
+
+  // وضعیت مجوز فقط هنگام آماده‌شدن صفحه — بدون افکت همگام‌نویس
+  const [smsChecked, setSmsChecked] = useState(false);
+  if (!smsChecked) {
+    setSmsChecked(true);
+    void checkSmsPermissions().then((g) => setSmsGranted(g));
+  }
+
+  useEffect(() => {
+    if (!smsListenerAvailable() || !smsGranted) return;
+    let disposed = false;
+    let remove: (() => void) | null = null;
+    void (async () => {
+      const un = await onBankSms((e) => {
+        setSmsEvent(e);
+        setSmsOpen(true);
+      });
+      if (disposed) un();
+      else remove = un;
+    })();
+    return () => {
+      disposed = true;
+      remove?.();
+    };
+  }, [smsGranted]);
+
+  const requestSms = useCallback(async () => {
+    const ok = await requestSmsPermissions();
+    if (ok) {
+      setSmsGranted(true);
+      toast.success("شنود پیامک بانکی فعال شد");
+      const un = await onBankSms((e) => {
+        setSmsEvent(e);
+        setSmsOpen(true);
+      });
+      smsUnsubRef.current?.();
+      smsUnsubRef.current = un;
+    } else {
+      toast.error("مجوز پیامک داده نشد — از تنظیمات اندروید هم قابل فعال‌سازی است");
+    }
+  }, []);
+
+  // بازیابی پشتیبان — v2.6.0: انتخاب فایل JSON خروجی و ادغام در دفتر فعال
+  const restoreBackup = useMutation(api.backup.restore);
+  const restoreInputRef = useRef<HTMLInputElement>(null);
+  const [restoring, setRestoring] = useState(false);
+  const restoreFileRef = useRef<File | null>(null);
+
+  const onRestorePicked = async (ev: Event) => {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    restoreFileRef.current = file;
+    const ok = confirm(
+      `بازیابی «${file.name}" در دفترِ فعال («${activeLedgerName}») انجام شود؟\n\n` +
+        "هیچ داده‌ای حذف نمی‌شود؛ رکوردهای تکراری رد و فقط موارد تازه افزوده می‌شوند.",
+    );
+    if (!ok) return;
+    setRestoring(true);
+    try {
+      const raw = JSON.parse(await file.text()) as Record<string, unknown>;
+      const asArr = (v: unknown): Record<string, unknown>[] =>
+        Array.isArray(v) ? (v as Record<string, unknown>[]) : [];
+      // برای نگاشتِ دسته/حساب با نام، نام را کنار شناسه قرار می‌دهیم
+      const withNames = (
+        rows: Record<string, unknown>[],
+        catMap: Map<string, string>,
+        accMap: Map<string, string>,
+      ): Record<string, unknown>[] =>
+        rows.map((r) => ({
+          ...r,
+          categoryName:
+            typeof r.categoryId === "string" ? catMap.get(r.categoryId) : undefined,
+          accountName: typeof r.accountId === "string" ? accMap.get(r.accountId) : undefined,
+          transferToName:
+            typeof r.transferToId === "string" ? accMap.get(r.transferToId) : undefined,
+        }));
+      const catNameMap = new Map<string, string>();
+      for (const c of asArr(raw.categories)) {
+        const rec = c as Record<string, unknown>;
+        if (typeof rec._id === "string") catNameMap.set(rec._id, String(rec.name ?? ""));
+      }
+      const accNameMap = new Map<string, string>();
+      for (const a of asArr(raw.accounts)) {
+        const rec = a as Record<string, unknown>;
+        if (typeof rec._id === "string") accNameMap.set(rec._id, String(rec.name ?? ""));
+      }
+      const counts = await restoreBackup({
+        categories: asArr(raw.categories),
+        accounts: asArr(raw.accounts),
+        transactions: withNames(asArr(raw.transactions), catNameMap, accNameMap),
+        debts: asArr(raw.debts),
+        subscriptions: withNames(asArr(raw.subscriptions), catNameMap, accNameMap),
+      });
+      const total = Object.values(counts).reduce((n, c) => n + c.added, 0);
+      const dup = Object.values(counts).reduce((n, c) => n + c.skipped, 0);
+      toast.success(
+        `بازیابی کامل شد — ${faDigits(total)} سند تازه افزوده و ${faDigits(dup)} تکراری رد شد`,
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "فایل پشتیبان معتبر نیست یا بازیابی ناموفق بود",
+      );
+    } finally {
+      setRestoring(false);
+      restoreFileRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    const input = restoreInputRef.current;
+    if (!input) return;
+    const handler = (ev: Event) => void onRestorePicked(ev);
+    input.addEventListener("change", handler);
+    return () => input.removeEventListener("change", handler);
+  });
 
   const exportAllJson = () => {
     if (
@@ -1238,6 +1374,27 @@ export default function Dashboard() {
           >
             <Printer className="size-3.5" />
             چاپ گزارش
+          </Button>
+          {smsListenerAvailable() && !smsGranted && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void requestSms()}
+              title="ثبت خودکار برداشت و واریز از پیامک بانک"
+            >
+              <MessageSquareText className="size-3.5" />
+              <span className="hidden sm:inline">شنود پیامک بانکی</span>
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => restoreInputRef.current?.click()}
+            disabled={restoring}
+            title="بازیابی فایل پشتیبان JSON — ادغام بدون حذف داده‌ها"
+          >
+            <HardDriveUpload className="size-3.5" />
+            <span className="hidden sm:inline">{restoring ? "در حال بازیابی…" : "بازیابی"}</span>
           </Button>
           <Button
             variant="outline"
@@ -1865,6 +2022,13 @@ export default function Dashboard() {
         unit={unit}
       />
       <HouseholdDialog open={householdOpen} onOpenChange={setHouseholdOpen} />
+      <AiCaptureDialog open={aiOpen} onOpenChange={setAiOpen} unit={unit} />
+      <SmsCaptureDialog
+        event={smsEvent}
+        open={smsOpen}
+        onOpenChange={setSmsOpen}
+        unit={unit}
+      />
       <Dialog open={!!deletingTx} onOpenChange={(o) => !o && setDeletingTx(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
@@ -1924,17 +2088,27 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* دکمهٔ شناور افزودن (موبایل) */}
-      <button
-        aria-label="تراکنش تازه"
-        className="fixed bottom-6 left-6 z-40 grid size-12 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105 sm:hidden"
-        onClick={() => {
-          setEditingTx(null);
-          setTxOpen(true);
-        }}
-      >
-        <Plus className="size-5" />
-      </button>
+      {/* دکمهٔ شناور افزودن (موبایل): گفتار/متن هوشمند + فرم کامل */}
+      <div className="fixed bottom-6 left-6 z-40 flex flex-col items-start gap-2 sm:hidden">
+        <button
+          aria-label="ثبت سریع با دستیار هوشمند"
+          title="ثبت سریع با گفتار یا متن — مثلاً «۲۰۰ تومن دادم به اسنپ»"
+          className="grid size-11 place-items-center rounded-full border bg-card text-foreground shadow-lg transition-transform hover:scale-105"
+          onClick={() => setAiOpen(true)}
+        >
+          <Sparkles className="size-5" />
+        </button>
+        <button
+          aria-label="تراکنش تازه"
+          className="grid size-12 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-105"
+          onClick={() => {
+            setEditingTx(null);
+            setTxOpen(true);
+          }}
+        >
+          <Plus className="size-5" />
+        </button>
+      </div>
     </div>
   );
 }

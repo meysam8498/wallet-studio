@@ -9,12 +9,15 @@
  */
 
 import type * as accounts from "../accounts.js";
+import type * as ai from "../ai.js";
 import type * as auth from "../auth.js";
+import type * as backup from "../backup.js";
 import type * as debts from "../debts.js";
 import type * as households from "../households.js";
 import type * as http from "../http.js";
 import type * as ledger from "../ledger.js";
 import type * as ownership from "../ownership.js";
+import type * as preferences from "../preferences.js";
 import type * as recurring from "../recurring.js";
 import type * as users from "../users.js";
 
@@ -26,12 +29,15 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   accounts: typeof accounts;
+  ai: typeof ai;
   auth: typeof auth;
+  backup: typeof backup;
   debts: typeof debts;
   households: typeof households;
   http: typeof http;
   ledger: typeof ledger;
   ownership: typeof ownership;
+  preferences: typeof preferences;
   recurring: typeof recurring;
   users: typeof users;
 }>;
