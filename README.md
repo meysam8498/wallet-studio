@@ -51,7 +51,8 @@ bun run dev
 ایمیل حذف شده‌اند و هیچ تنظیم اضافه‌ای لازم نیست.
 
 دستیار هوشمند (از 2.6.0) بدون هیچ کلیدی هم با تجزیه‌گر قاعده‌محور کار
-می‌کند؛ برای تشخیص دقیق‌تر می‌توانید کلیدهای رایگان را در سرور تنظیم کنید
+می‌کند و از 2.7.0 طلب و بدهی اشخاص را هم تشخیص می‌دهد؛ برای تشخیص دقیق‌تر
+می‌توانید کلیدهای رایگان را در سرور تنظیم کنید
 (هیچ‌کدام در کد نمی‌آیند):
 
 ```bash
@@ -71,8 +72,14 @@ bun x tsc -b --noEmit && bun run lint && bun run build
 راهنمای کامل و نسخه‌به‌نسخه: [`docs/DOCKER.md`](./docs/DOCKER.md)
 
 ```bash
-docker build --build-arg VITE_CONVEX_URL="…" -t meysam8498/daftaram:2.6.0 .
-docker run -d -p 8080:80 --restart unless-stopped meysam8498/daftaram:2.6.0
+docker build --build-arg VITE_CONVEX_URL="…" -t meysam8498/daftaram:2.7.0 .
+docker run -d -p 8080:80 --restart unless-stopped meysam8498/daftaram:2.7.0
+```
+
+یا تصویر آماده از داکر هاب:
+
+```bash
+docker run -d -p 8080:80 meysam8498/daftaram:latest
 ```
 
 انتشار خودکار روی GHCR با هر برچسب `vX.Y.Z` — پیکربندی در
