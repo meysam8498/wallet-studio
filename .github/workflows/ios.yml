@@ -21,17 +21,26 @@ jobs:
       - name: نصب وابستگی‌ها
         run: bun install --frozen-lockfile
 
+      - name: نصب CocoaPods
+        run: sudo gem install cocoapods --no-document
+
       - name: ساخت خروجی وب
         env:
           VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
         run: bun run build
 
       - name: افزودن پلتفرم iOS
+        # بستهٔ @capacitor/ios باید پیش از `cap add ios` در node_modules
+        # باشد وگرنه پوسته ناقص ساخته می‌شود. CocoaPods هم در Capacitor 7
+        # برای پوستهٔ iOS لازم است.
         run: |
+          bun add @capacitor/ios@7
           if [ ! -d ios ]; then
             bun x cap add ios
           fi
           bun x cap sync ios
+        env:
+          CI: ""
 
       - name: ساخت بستهٔ بدون امضا
         run: |

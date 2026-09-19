@@ -19,7 +19,11 @@ jobs:
           java-version: "21"
 
       - name: نصب Android SDK
-        uses: android-actions/setup-android@v3
+        # setup-android گاهی در نصب cmdline-tools 16 با خطای لایسنس متوقف
+        # می‌شود؛ SDK از پیش روی رانر هست و فقط لایسنس‌ها را می‌پذیریم.
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-36" "build-tools;36.0.0" > /dev/null
 
       - name: نصب Bun
         uses: oven-sh/setup-bun@v2

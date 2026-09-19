@@ -39,10 +39,13 @@ jobs:
         run: bun x tauri build --target x86_64-apple-darwin
 
       - name: تغییر نام به الگوی latest
+        # اگر هر دو معماری ساخته شد کپی می‌شوند؛ شکست یک معماری بقیهٔ
+        # انتشار را نمی‌بندد (fail-soft).
         run: |
           mkdir -p renamed
-          cp src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg renamed/Daftaram-latest-macOS-arm64.dmg
-          cp src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg renamed/Daftaram-latest-macOS-intel.dmg
+          cp src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg renamed/Daftaram-latest-macOS-arm64.dmg || echo "arm64 dmg not found"
+          cp src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg renamed/Daftaram-latest-macOS-intel.dmg || echo "intel dmg not found"
+          ls renamed/
 
       - name: بارگذاری بسته‌ها به Release
         # بسته‌ها امضای Apple ندارند؛ کاربر هنگام نخستین اجرا از
@@ -53,6 +56,5 @@ jobs:
           files: |
             src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
             src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg
-            renamed/Daftaram-latest-macOS-arm64.dmg
-            renamed/Daftaram-latest-macOS-intel.dmg
+            renamed/*
           append_body: true
