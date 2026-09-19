@@ -12,9 +12,9 @@
  *   patch  — رفع اشکال یا بهبود جزئی
  */
 
-export const VERSION = "2.6.0";
+export const VERSION = "2.7.0";
 
-export const RELEASE_DATE = "۱۴۰۵/۰۶/۲۳";
+export const RELEASE_DATE = "۱۴۰۵/۰۶/۳۱";
 
 export type ChangeType = "added" | "changed" | "fixed" | "security";
 
@@ -41,6 +41,21 @@ export const CHANGE_TYPE_COLORS: Record<ChangeType, string> = {
 };
 
 export const CHANGELOG: ChangelogEntry[] = [
+  {
+    version: "2.7.0",
+    date: "۱۴۰۵/۰۶/۳۱",
+    title: "چیدمان واقعی کارت‌ها، ویرایش موبایل و طلب‌یار هوشمند",
+    changes: [
+      { type: "fixed", text: "رفع فروپاشی داشبورد هنگام اجرا (خطای زمان مقداردهی) و بازآفرینی بورد کارت‌ها: ترتیب و پنهان‌سازی چیدمان اکنون روی همهٔ پلتفرم‌ها واقعاً اعمال می‌شود — پیش‌تر فقط منو ذخیره می‌کرد و کارت‌ها سرِ جای خود می‌ماندند" },
+      { type: "added", text: "ثابت‌شدن ترتیب کارت‌ها پس از بستن و بازکردن برنامه — چیدمان روی سرور با حساب شما می‌ماند و به ویندوز، اندروید و وب منتقل می‌شود" },
+      { type: "added", text: "ویرایش و حذف تراکنش‌ها و دسته‌ها روی موبایل — دکمه‌ها همیشه نمایان‌اند و دیگر به هاور موس وابسته نیستند" },
+      { type: "added", text: "جداکنندهٔ سه‌رقمی مبالغ هنگام تایپ (مثل ۱٬۲۵۰٬۰۰۰) در فرم تراکنش، دستیار هوشمند و دیالوگ پیامک — ورودی خواناتر و کم‌خطاتر می‌شود" },
+      { type: "added", text: "طلب‌یار دستیار هوشمند: «به علی پول دادم» یا «از مریم پول گرفتم» به‌صورت طلب/بدهی شخص با جهت (طلب من / بدهی من) تشخیص داده می‌شود و پس از تأیید شما در دفتر طلب‌ها می‌نشیند" },
+      { type: "added", text: "مدیریت دفاتر خانوار در گفت‌وگوی خانوار: دید دفتر فعال (شخصی/خانوار) با تغییر وضعیت یک‌لمسی و بخش دعوت اعضا با کد همیشه در دسترس" },
+      { type: "added", text: "بخش «دریافت برنامه» در درباره: لینک دائمی آخرین نسخهٔ همهٔ پلتفرم‌ها — اندروید، ویندوز، مک، لینوکس و iOS — مستقیم از Releaseهای گیت‌هاب" },
+      { type: "fixed", text: "مجوزهای اندروید (میکروفون و پیامک) اکنون هنگام اولین استفاده به‌صورت گفت‌وگوی سیستم درخواست می‌شوند؛ مجوز پیامک دکمهٔ فعال‌سازی مستقیم در نوار ابزار دارد" },
+    ],
+  },
   {
     version: "2.6.0",
     date: "۱۴۰۵/۰۶/۲۹",
@@ -266,7 +281,7 @@ export const CONTACTS: ContactItem[] = [
 
 export type DownloadItem = {
   id: string;
-  platform: "android" | "windows" | "web";
+  platform: "android" | "windows" | "mac" | "linux" | "ios" | "web";
   label: string;
   version: string;
   size?: string;
@@ -296,6 +311,30 @@ export const DOWNLOADS: DownloadItem[] = [
     version: VERSION,
     href: `${LATEST_BASE}/Daftaram-latest-windows-x64-setup.exe`,
     note: "همیشه تازه‌ترین نسخه",
+  },
+  {
+    id: "mac",
+    platform: "mac",
+    label: "macOS (DMG)",
+    version: VERSION,
+    href: `${LATEST_BASE}/Daftaram-latest-macOS-arm64.dmg`,
+    note: "Apple Silicon — نخستین اجرا با Open Anyway",
+  },
+  {
+    id: "linux",
+    platform: "linux",
+    label: "لینوکس (AppImage)",
+    version: VERSION,
+    href: `${LATEST_BASE}/Daftaram-latest-linux.AppImage`,
+    note: "بدون نصب — اجرای مستقیم",
+  },
+  {
+    id: "ios",
+    platform: "ios",
+    label: "iOS (بدون امضا)",
+    version: VERSION,
+    href: `${LATEST_BASE}/Daftaram-latest-ios-unsigned.ipa`,
+    note: "نصب با AltStore یا Sideloadly",
   },
 ];
 

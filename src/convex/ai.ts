@@ -23,11 +23,15 @@ import { v } from "convex/values";
 import { internalAction } from "./_generated/server";
 
 export type DraftTx = {
-  type: "expense" | "income" | "transfer";
+  type: "expense" | "income" | "transfer" | "debt";
   /** مبلغ به تومان */
   amount: number;
   /** نام دستهٔ پیشنهادی (فارسی، خلاصه) */
   category: string;
+  /** برای طلب/بدهی: نام طرف حساب (مثلاً «علی») */
+  person?: string;
+  /** فقط برای طلب: من بدهکارم یا طلبکار */
+  debtDirection?: "owed_to_me" | "owed_by_me";
   note?: string;
   /** کدام ارائه‌دهنده تشخیص داد — برای نمایش در رابط */
   provider: string;
@@ -37,14 +41,16 @@ export type DraftTx = {
 
 type ProviderResult = DraftTx | null;
 
-const SYSTEM_PROMPT = `تو دستیار حسابداری شخصیِ یک برنامهٔ فارسی هستی. کاربر یک جملهٔ فارسی محاوره‌ای می‌گوید و تو آن را به تراکنش تبدیل می‌کنی.
+const SYSTEM_PROMPT = `تو دستیار حسابداری شخصیِ یک برنامهٔ فارسی هستی. کاربر یک جملهٔ فارسی محاوره‌ای می‌گوید و تو آن را به تراکنش یا طلب تبدیل می‌کنی.
 
 فقط و فقط یک JSON معتبر برگردان، بدون هیچ توضیح اضافه:
-{"type":"expense"|"income"|"transfer","amount":<عدد به تومان>,"category":"<نام دسته کوتاه فارسی>","note":"<یادداشت کوتاه یا خالی>","confidence":<0 تا 1>}
+{"type":"expense"|"income"|"transfer"|"debt","amount":<عدد به تومان>,"category":"<نام دسته کوتاه فارسی>","person":"<نام شخص فقط برای debt>","debtDirection":"owed_to_me"|"owed_by_me"|"","note":"<یادداشت کوتاه یا خالی>","confidence":<0 تا 1>}
 
 قواعد:
 - «تومن/تومان» بدون هزار یعنی همان عدد؛ «هزار تومن» ×۱۰۰۰؛ «میلیون» ×۱٬۰۰۰٬۰۰۰. اعداد فارسی و انگلیسی هر دو می‌آید.
 - «دادم/خریدم/پرداخت کردم/فرستادم» = expense. «گرفتم/دریافت کردم/واریز شد» = income. «منتقل کردم/کارت به کارت» = transfer.
+- اگر گوینده به یک «شخص» پول داده یا از او گرفته و قرار است بعداً برگردد (قرض، طلب، نسیه): type = "debt". اگر «به علی ۵۰۰ تومن دادم» و بلاعوض بود expense است؛ اگر قرض بود debt. اگر واژهٔ قرض/طلب/نسیه/بدهکار/طلبکار بود حتماً debt.
+- برای debt: debtDirection = "owed_to_me" اگر از او گرفتم و باید پس بدهد (طلب من)؛ "owed_by_me" اگر به او دادم و من بدهکارم. person = نام شخص.
 - دسته را از کاربرد روزمرهٔ فارسی انتخاب کن: خوراک، حمل‌ونقل، قبض، خرید، تفریح، سلامت، آموزش، اجاره، حقوق، هدیه و مانند آن.
 - اگر مبلغ مبهم است ۰ بگذار و confidence را کم بده.`;
 
@@ -62,16 +68,21 @@ function extractJson(text: string): Record<string, unknown> | null {
 
 function normalize(raw: Record<string, unknown>, provider: string): DraftTx | null {
   const type = String(raw.type ?? "");
-  if (!["expense", "income", "transfer"].includes(type)) return null;
+  if (!["expense", "income", "transfer", "debt"].includes(type)) return null;
   const amount = Math.round(Number(raw.amount ?? 0));
-  const category = String(raw.category ?? "").trim() || (type === "income" ? "درآمد" : "سایر");
+  const category = String(raw.category ?? "").trim() || (type === "income" ? "درآمد" : type === "debt" ? "طلب" : "سایر");
   const note = String(raw.note ?? "").trim();
+  const person = String(raw.person ?? "").trim();
+  const debtDir = String(raw.debtDirection ?? "");
   const confidence = Math.min(1, Math.max(0, Number(raw.confidence ?? 0.7)));
   if (!Number.isFinite(amount) || amount < 0) return null;
   return {
     type: type as DraftTx["type"],
     amount,
     category,
+    person: type === "debt" && person ? person : undefined,
+    debtDirection:
+      type === "debt" && debtDir === "owed_by_me" ? "owed_by_me" : type === "debt" ? "owed_to_me" : undefined,
     note: note || undefined,
     provider,
     confidence,
@@ -171,18 +182,35 @@ function ruleBased(text: string): DraftTx {
   if (/ریال/.test(lower) && amount > 0) amount = Math.round(amount / 10);
   const isIncome = /گرفتم|دریافت|واریز شد|حقوق|فروختم/.test(lower);
   const isTransfer = /منتقل|کارت به کارت|حواله/.test(lower);
-  let category = isIncome ? "درآمد" : "سایر";
-  for (const [re, name] of FALLBACK_CATEGORIES) {
-    if (re.test(lower)) {
-      category = name;
-      break;
+  // تشخیص طلب/قرض — v2.7.0: قرض و طلب بین اشخاص، تراکنش دفتر نیست
+  const isDebt = /قرض|طلب|نسیه|بدهکار|طلبکار|بدهی|دستمال|دست مال/.test(lower);
+  // نام شخص: «به علی»، «از علی»، «علی gave» — کلمهٔ بعد از به/از/برای اگر نام باشد
+  let person: string | undefined;
+  const personMatch = lower.match(/(?:به|از|برای)\s+([ء-يa-zA-Z]{2,15})\s/);
+  if (isDebt && personMatch) person = personMatch[1];
+  const debtDirection =
+    /از .* گرفتم|قرض .* دادم|طلب دارم|طلبم/.test(lower)
+      ? "owed_to_me"
+      : /به .* دادم|قرض .* گرفتم|بدهکار/.test(lower)
+        ? "owed_by_me"
+        : undefined;
+  let category = isIncome ? "درآمد" : isDebt ? "طلب" : "سایر";
+  if (!isDebt) {
+    for (const [re, name] of FALLBACK_CATEGORIES) {
+      if (re.test(lower)) {
+        category = name;
+        break;
+      }
     }
   }
   if (isIncome && category === "سایر") category = "درآمد";
   return {
-    type: isTransfer ? "transfer" : isIncome ? "income" : "expense",
+    type: isDebt ? "debt" : isTransfer ? "transfer" : isIncome ? "income" : "expense",
     amount,
     category,
+    person,
+    debtDirection:
+      debtDirection ?? (isDebt ? (isIncome ? "owed_to_me" : "owed_by_me") : undefined),
     note: text.trim().slice(0, 80),
     provider: "قاعده‌محور",
     confidence: amount > 0 ? 0.5 : 0.25,
@@ -209,7 +237,7 @@ export const parseTransaction = internalAction({
         callOpenAICompatible(
           "https://openrouter.ai/api/v1",
           openrouter,
-          "google/gemini-2.0-flash-exp:free",
+          "deepseek/deepseek-v4-flash-0731:free",
           "OpenRouter",
           clean,
         ),

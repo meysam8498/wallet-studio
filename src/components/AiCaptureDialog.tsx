@@ -26,13 +26,15 @@ import { cn } from "@/lib/utils";
 import {
   ArrowLeftRight,
   BadgeCheck,
+  HandCoins,
   Loader2,
   Mic,
   Sparkles,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
-import { faDigits, formatMoneyIn, jalaliToGregorian, todayJ, type UnitId } from "@/lib/format";
+import { faDigits, formatMoneyIn, groupDigitsInput, jalaliToGregorian, normalizeDigits, todayJ, type UnitId } from "@/lib/format";
+import { isNative, requestMicrophonePermission } from "@/lib/android-permissions";
 
 type Account = {
   _id: string;
@@ -49,9 +51,11 @@ type Category = {
 };
 
 type Draft = {
-  type: "expense" | "income" | "transfer";
+  type: "expense" | "income" | "transfer" | "debt";
   amount: number;
   category: string;
+  person?: string;
+  debtDirection?: "owed_to_me" | "owed_by_me";
   note?: string;
   provider: string;
   confidence: number;
@@ -101,6 +105,7 @@ export function AiCaptureDialog({
 }) {
   const parse = useAction(api.ledger.parseTransactionProxy);
   const createTx = useMutation(api.ledger.createTransaction);
+  const createDebt = useMutation(api.debts.create);
   const accounts = useQuery(api.accounts.list) as Account[] | undefined;
   const categories = useQuery(api.ledger.listCategories) as Category[] | undefined;
 
@@ -124,11 +129,19 @@ export function AiCaptureDialog({
     onOpenChange(next);
   };
 
-  const startListening = () => {
+  const startListening = async () => {
     const Ctor = getSpeechRecognition();
     if (!Ctor) {
       toast.error("تشخیص گفتار در این مرورگر پشتیبانی نمی‌شود — بنویسید");
       return;
+    }
+    // مجوز میکروفون در اندروید قبل از شروع شنیدن — v2.7.0
+    if (isNative()) {
+      const ok = await requestMicrophonePermission();
+      if (!ok) {
+        toast.error("مجوز میکروفون داده نشد — از تنظیمات اندروید قابل فعال‌سازی است");
+        return;
+      }
     }
     const rec = new Ctor();
     rec.lang = "fa-IR";
@@ -178,12 +191,32 @@ export function AiCaptureDialog({
     if (!draft || draft.amount <= 0) return;
     setSaving(true);
     try {
+      const j = todayJ();
+      const today = jalaliToGregorian(j.jy, j.jm, j.jd);
+      const srcNote = [draft.note, draft.provider !== "قاعده‌محور" ? `✦ ${draft.provider}` : undefined]
+        .filter(Boolean)
+        .join(" · ");
+
+      // طلب/بدهی — v2.7.0: ثبت در جدول طلب‌ها نه تراکنش‌های دفتر
+      if (draft.type === "debt") {
+        await createDebt({
+          person: draft.person?.trim() || "ناشناس",
+          amount: draft.amount,
+          direction: draft.debtDirection ?? "owed_to_me",
+          note: srcNote || undefined,
+        });
+        toast.success(
+          `${draft.debtDirection === "owed_by_me" ? "بدهی" : "طلب"} ${draft.person ? `از ${draft.person}` : ""} ثبت شد — ${formatMoneyIn(draft.amount, unit)}`,
+        );
+        onOpenChange(false);
+        return;
+      }
+
       const cat = matchCategory(draft.category, draft.type);
       const account = (accounts ?? [])[0];
-      const j = todayJ();
       await createTx({
         amount: draft.amount,
-        date: jalaliToGregorian(j.jy, j.jm, j.jd),
+        date: today,
         type: draft.type,
         categoryId:
           cat && draft.type !== "transfer" ? (cat._id as Id<"categories">) : undefined,
@@ -192,9 +225,7 @@ export function AiCaptureDialog({
           draft.type === "transfer"
             ? (((accounts ?? [])[1]?._id ?? account?._id) as Id<"accounts"> | undefined)
             : undefined,
-        note: [draft.note, draft.provider !== "قاعده‌محور" ? `✦ ${draft.provider}` : undefined]
-          .filter(Boolean)
-          .join(" · "),
+        note: srcNote,
       });
       toast.success(
         `${draft.type === "income" ? "درآمد" : draft.type === "transfer" ? "انتقال" : "هزینه"} ثبت شد — ${formatMoneyIn(draft.amount, unit)}`,
@@ -215,6 +246,10 @@ export function AiCaptureDialog({
     ) : t === "transfer" ? (
       <span className="inline-flex items-center gap-1 rounded-[3px] bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
         <ArrowLeftRight className="size-3" /> انتقال
+      </span>
+    ) : t === "debt" ? (
+      <span className="inline-flex items-center gap-1 rounded-[3px] bg-chart-4/10 px-1.5 py-0.5 text-[11px] font-medium text-chart-4">
+        <HandCoins className="size-3" /> طلب/بدهی
       </span>
     ) : (
       <span className="inline-flex items-center gap-1 rounded-[3px] bg-destructive/10 px-1.5 py-0.5 text-[11px] font-medium text-destructive">
@@ -252,7 +287,7 @@ export function AiCaptureDialog({
                 <button
                   type="button"
                   aria-label={listening ? "توقف شنیدن" : "گفتن"}
-                  onClick={() => (listening ? recRef.current?.stop() : startListening())}
+                  onClick={() => (listening ? recRef.current?.stop() : void startListening())}
                   className={cn(
                     "absolute left-1.5 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-[3px] transition-colors",
                     listening
@@ -305,15 +340,46 @@ export function AiCaptureDialog({
               </p>
             )}
 
+            {draft.type === "debt" && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="ai-person">نام شخص</Label>
+                  <Input
+                    id="ai-person"
+                    value={draft.person ?? ""}
+                    onChange={(e) => setDraft({ ...draft, person: e.target.value })}
+                    placeholder="مثلاً علی"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>جهت</Label>
+                  <Select
+                    value={draft.debtDirection ?? "owed_to_me"}
+                    onValueChange={(v) =>
+                      setDraft({ ...draft, debtDirection: v as "owed_to_me" | "owed_by_me" })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="owed_to_me">طلب دارم (به من بدهکار است)</SelectItem>
+                      <SelectItem value="owed_by_me">بدهکارم (باید پس بدهم)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>مبلغ (تومان)</Label>
                 <Input
                   dir="ltr"
                   inputMode="numeric"
-                  value={draft.amount || ""}
+                  value={draft.amount ? groupDigitsInput(String(draft.amount)) : ""}
                   onChange={(e) => {
-                    const n = Number(e.target.value.replace(/[^\d]/g, ""));
+                    const n = Number(normalizeDigits(e.target.value).replace(/[^\d]/g, ""));
                     setDraft({ ...draft, amount: Number.isFinite(n) ? n : 0 });
                   }}
                 />

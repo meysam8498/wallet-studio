@@ -229,3 +229,18 @@ export function formatMoneyIn(
   const abs = formatAmount(Math.abs(value));
   return `${sign ? sign + " " : ""}${abs} ${unitLabel(unit)}`;
 }
+
+/**
+ * گروه‌بندی سه‌رقمی حین تایپ — v2.7.0
+ *
+ * ورودی کاربر (فارسی یا انگلیسی، با هر جداکننده‌ای) را به عدد می‌خواند و
+ * با «٬» فارسی سه‌رقم‌سه‌رقم برمی‌گرداند تا مبلغ در فیلد خوانا بماند.
+ * نمونه: «2500000» → «۲٬۵۰۰٬۰۰۰». برای ذخیره، normalizeDigits کافی است.
+ */
+export function groupDigitsInput(raw: string): string {
+  const normalized = normalizeDigits(raw).replace(/[^0-9.]/g, "");
+  if (!normalized) return "";
+  const [intPart, frac] = normalized.split(".");
+  const grouped = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, "٬");
+  return frac !== undefined ? `${grouped}٫${frac}` : grouped;
+}

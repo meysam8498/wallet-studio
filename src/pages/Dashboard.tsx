@@ -1,20 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
-import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -38,31 +30,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from "@/components/ui/chart";
-import { Pie, PieChart, Cell } from "recharts";
-import {
   WidgetSettingsMenu,
+  WidgetSlot,
   useWidgetState,
+  type WidgetId,
 } from "@/components/WidgetBoard";
 import {
-  ArrowLeftRight,
+  CategoriesCard,
+  YearlyCard,
+  TrendCard,
+  TransfersCard,
+  BudgetsCard,
+  TransactionsCard,
+} from "@/components/DashboardWidgets";
+import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
-  Download,
   HandCoins,
   HardDriveDownload,
   HardDriveUpload,
@@ -74,7 +58,6 @@ import {
   Printer,
   Repeat,
   Sparkles,
-  Search,
   Sun,
   Tags,
   Trash2,
@@ -104,7 +87,6 @@ import {
   type BankSmsEvent,
 } from "@/lib/sms-listener";
 import { RecurringDialog, type Subscription } from "@/components/RecurringDialog";
-import { TrendChart } from "@/components/TrendChart";
 import { printMonthReport } from "@/lib/print";
 import {
   faDigits,
@@ -114,6 +96,7 @@ import {
   jDateLabel,
   jMonthLabel,
   jShift,
+  groupDigitsInput,
   normalizeDigits,
   todayJ,
   todayGregorianKey,
@@ -332,7 +315,7 @@ function TransactionDialog({
               inputMode="decimal"
               placeholder="۰"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => setAmount(groupDigitsInput(e.target.value))}
               autoFocus
               required
             />
@@ -727,7 +710,7 @@ function CategoryManager({
                         <button
                           type="button"
                           aria-label={`ویرایش ${c.name}`}
-                          className="text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                          className="max-sm:opacity-100 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
                           onClick={() => startEdit(c)}
                         >
                           <Pencil className="size-3.5" />
@@ -735,7 +718,7 @@ function CategoryManager({
                         <button
                           type="button"
                           aria-label={`حذف ${c.name}`}
-                          className="text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100"
+                          className="max-sm:opacity-100 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100"
                           onClick={() => setDeleting(c)}
                         >
                           <Trash2 className="size-3.5" />
@@ -794,7 +777,6 @@ export default function Dashboard() {
   const ensureSeed = useMutation(api.ledger.ensureSeed);
   const removeTx = useMutation(api.ledger.deleteTransaction);
   const exportAllData = useQuery(api.ledger.exportAll);
-  const peers = useQuery(api.users.ledgerPeers);
 
   const [monthJ, setMonthJ] = useState<JMonthKey>(() => {
     const t = todayJ();
@@ -815,8 +797,9 @@ export default function Dashboard() {
   const [deletingTx, setDeletingTx] = useState<Transaction | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<Transaction | null>(null);
 
-  // چیدمان شخصی کارت‌های داشبورد — ترتیب/پنهان‌سازی روی همین دستگاه (v2.4.0)
+  // چیدمان شخصی کارت‌های داشبورد — ترتیب/پنهان‌سازی همگام از سرور (v2.6.0)
   const widgets = useWidgetState();
+
   // دفتر فعال (شخصی یا خانوار) — برای نشانِ انتخاب دفتر در سربرگ
   const myHousehold = useQuery(api.households.myHousehold);
   const activeLedgerName = myHousehold ? myHousehold.name : "دفتر شخصی";
@@ -1027,6 +1010,13 @@ export default function Dashboard() {
   );
 
   // نمای سالانه — ۱۲ ماه شمسیِ سال جاری (v1.5.0)
+  /** نقشهٔ ماه→جمع را به آرایهٔ مرتبٔ ۱۲ماهه تبدیل می‌کند (برای YearlyCard) */
+  const m2a = (m: Map<string, { income: number; expense: number }>, jy: number) =>
+    Array.from({ length: 12 }, (_, i) => {
+      const s = m.get(`${jy}-${i + 1}`) ?? { income: 0, expense: 0 };
+      return { jm: i + 1, income: s.income, expense: s.expense };
+    });
+
   const yearSums = useMemo(() => {
     const now = todayJ();
     const m = new Map<string, { income: number; expense: number }>();
@@ -1049,7 +1039,7 @@ export default function Dashboard() {
         expense += s.expense;
       }
     }
-    return { sums: m, income, expense, net: income - expense, jy: now.jy };
+    return { sums: m, income, expense, net: income - expense, jy: now.jy, months: m2a(m, now.jy) };
   }, [allTxs]);
 
   const series = useMemo(() => {
@@ -1138,20 +1128,9 @@ export default function Dashboard() {
     );
   }, [monthTxs, filter, query, byId, accById]);
 
-  const chartConfig = useMemo(() => {
-    const cfg: ChartConfig = {};
-    for (const r of series.rows) cfg[r.key] = { label: r.name, color: r.color };
-    return cfg;
-  }, [series]);
-
   const currentJ = todayJ();
   const isCurrentMonth =
     monthOrder(monthJ) === monthOrder({ jy: currentJ.jy, jm: currentJ.jm });
-
-  const topShare =
-    series.grand > 0 && series.rows.length > 0
-      ? Math.round((series.rows[0]!.total / series.grand) * 100)
-      : 0;
 
   const totalBalance = useMemo(() => {
     if (!accounts) return 0;
@@ -1212,6 +1191,90 @@ export default function Dashboard() {
     navigate("/auth");
   };
 
+  // بورد کارت‌ها — v2.7.0: به ترتیبِ انتخابی کاربر (همگام از سرور) رندر می‌شود.
+  // اینجا تعریف می‌شود تا همهٔ داده‌ها (فوق) و کنش‌ها در دسترس باشند.
+  const widgetsBoard = useMemo(() => {
+    const map: Partial<Record<WidgetId, ReactNode>> = {
+      categories: (
+        <CategoriesCard
+          scope={scope === "income" ? "income" : "expense"}
+          onScopeChange={(v) => setScope(v as TxType)}
+          chartTxs={chartTxs}
+          byId={byId}
+          unit={unit}
+          monthLabel={jMonthLabel(monthJ.jy, monthJ.jm)}
+          onOpenCats={() => setCatsOpen(true)}
+        />
+      ),
+      yearly: (
+        <YearlyCard
+          yearSums={{ jy: yearSums.jy, months: yearSums.months }}
+          unit={unit}
+        />
+      ),
+      trend: <TrendCard trendSums={trendSums} />,
+      transfers: (
+        <TransfersCard monthTransfers={monthTransfers} accById={accById} unit={unit} />
+      ),
+      budgets: (
+        <BudgetsCard
+          budgets={budgets.map((b) => ({
+            id: b.cat._id,
+            name: b.cat.name,
+            color: b.cat.color,
+            budget: b.budget,
+            spent: b.spent,
+          }))}
+          unit={unit}
+          onEditBudgets={() => setCatsOpen(true)}
+        />
+      ),
+      transactions: (
+        <TransactionsCard
+          monthTxs={monthTxs}
+          filteredTxs={filteredTxs}
+          monthLabel={jMonthLabel(monthJ.jy, monthJ.jm)}
+          byId={byId}
+          accById={accById}
+          unit={unit}
+          query={query}
+          onQueryChange={setQuery}
+          catFilter={filter}
+          onCatFilterChange={(v) => setFilter(v as CatFilter)}
+          categories={categories ?? []}
+          onExportCsv={exportCsv}
+          onEditTx={(t) => {
+            setEditingTx(t);
+            setTxOpen(true);
+          }}
+          onDeleteTx={setDeletingTx}
+        />
+      ),
+    };
+    return widgets.order
+      .filter((id) => !widgets.hidden.includes(id) && map[id])
+      .map((id) => ({ id, widget: map[id]! }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    widgets.order,
+    widgets.hidden,
+    scope,
+    chartTxs,
+    byId,
+    unit,
+    monthJ,
+    yearSums,
+    trendSums,
+    monthTransfers,
+    accById,
+    budgets,
+    monthTxs,
+    filteredTxs,
+    query,
+    filter,
+    categories,
+  ]);
+
   const loading =
     categories === undefined ||
     transactions === undefined ||
@@ -1270,7 +1333,7 @@ export default function Dashboard() {
               <p className="truncate text-[11px] font-medium text-foreground/80 group-hover:text-foreground">
                 {activeLedgerName}
               </p>
-              <Pencil className="size-2.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+              <Pencil className="max-sm:opacity-100 size-2.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
             </button>
             <h1 className="mt-2 font-display text-3xl font-medium sm:text-4xl">
               {jMonthLabel(monthJ.jy, monthJ.jm)}
@@ -1471,516 +1534,13 @@ export default function Dashboard() {
             </div>
 
             {/* تختهٔ کارت‌ها — masonry دوستونه با ترتیب شخصی (v2.4.0):
-                کارت‌ها در دو ستون متوازن جریان می‌یابند؛ نه «مثل قطار» زیر هم،
-                نه نصف صفحهٔ خالی. ترتیب از منوی «چیدمان» قابل تغییر است. */}
+            {/* تختهٔ کارت‌ها — masonry دوستونه با ترتیب شخصی (v2.7.0):
+                کارت‌ها به ترتیبِ ذخیره‌شدهٔ کاربر (همگام‌شده از سرور) رندر
+                می‌شوند و پنهان‌شده‌ها اصلاً در صفحه نمی‌آیند. */}
             <div className="board-columns mt-10 columns-1 gap-6 md:columns-2">
-                <Card className="break-inside-avoid gap-5 rounded-[4px] border-border/70 py-6 shadow-none">
-                  <CardHeader className="px-6">
-                    <CardAction>
-                      <Tabs
-                        value={scope}
-                        onValueChange={(v) => setScope(v as TxType)}
-                      >
-                        <TabsList className="h-8 rounded-[4px] bg-secondary p-0.5">
-                          <TabsTrigger
-                            value="expense"
-                            className="h-7 rounded-[3px] px-3 text-xs"
-                          >
-                            هزینه‌ها
-                          </TabsTrigger>
-                          <TabsTrigger
-                            value="income"
-                            className="h-7 rounded-[3px] px-3 text-xs"
-                          >
-                            درآمدها
-                          </TabsTrigger>
-                        </TabsList>
-                      </Tabs>
-                    </CardAction>
-                    <CardTitle className="font-display text-xl">
-                      {scope === "expense"
-                        ? "هزینه‌ها به تفکیک دسته"
-                        : "درآمدها به تفکیک دسته"}
-                    </CardTitle>
-                    <CardDescription>
-                      {series.grand > 0
-                        ? `${formatMoneyIn(series.grand, unit)} در ${faDigits(series.rows.length)} دسته`
-                        : "برای این ماه هنوز سندی ثبت نشده است"}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="px-6">
-                    {series.grand > 0 ? (
-                      <>
-                        <div className="flex flex-col items-center gap-8 sm:flex-row">
-                          <ChartContainer
-                            config={chartConfig}
-                            className="mx-auto aspect-square max-h-56 w-56 shrink-0"
-                          >
-                            <PieChart>
-                              <ChartTooltip
-                                content={
-                                  <ChartTooltipContent
-                                    hideLabel
-                                    formatter={(value, name) => (
-                                      <div className="flex w-full items-center justify-between gap-4">
-                                        <span className="text-muted-foreground">
-                                          {chartConfig[name as string]?.label ?? name}
-                                        </span>
-                                        <span className="font-medium tabular-nums">
-                                          {formatMoneyIn(Number(value), unit)}
-                                        </span>
-                                      </div>
-                                    )}
-                                  />
-                                }
-                              />
-                              <Pie
-                                data={series.rows}
-                                dataKey="total"
-                                nameKey="key"
-                                innerRadius="62%"
-                                outerRadius="92%"
-                                paddingAngle={2}
-                                stroke="var(--card)"
-                                strokeWidth={1}
-                              >
-                                {series.rows.map((r) => (
-                                  <Cell key={r.key} fill={r.color} />
-                                ))}
-                              </Pie>
-                            </PieChart>
-                          </ChartContainer>
-                          <div className="grid w-full gap-2.5">
-                            {series.rows.map((r) => {
-                              const pct = Math.round((r.total / series.grand) * 100);
-                              return (
-                                <div key={r.key} className="grid gap-1">
-                                  <div className="flex items-baseline justify-between gap-3 text-sm">
-                                    <span className="flex min-w-0 items-center gap-2">
-                                      <span
-                                        className="size-2 shrink-0 rounded-full"
-                                        style={{ backgroundColor: r.color }}
-                                      />
-                                      <span className="truncate">{r.name}</span>
-                                    </span>
-                                    <span className="shrink-0 tabular-nums text-muted-foreground">
-                                      {formatMoneyIn(r.total, unit)}
-                                      <span className="mr-1.5 text-xs">
-                                        · {faDigits(pct)}٪
-                                      </span>
-                                    </span>
-                                  </div>
-                                  <div className="h-px w-full bg-border/70">
-                                    <motion.div
-                                      className="h-px bg-foreground/70"
-                                      initial={{ scaleX: 0 }}
-                                      animate={{ scaleX: pct / 100 }}
-                                      style={{ originX: 1 }}
-                                      transition={{ duration: 0.6, ease: "easeOut" }}
-                                    />
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                        {topShare > 0 && (
-                          <p className="mt-5 border-t pt-4 text-xs leading-5 text-muted-foreground">
-                            بیشترین سهم این ماه{" "}
-                            <span className="text-foreground">
-                              {series.rows[0]!.name}
-                            </span>{" "}
-                            است — با سهم {faDigits(topShare)}٪ از{" "}
-                            {scope === "expense" ? "خرج" : "درآمد"}.
-                          </p>
-                        )}
-                      </>
-                    ) : (
-                      <div className="grid place-items-center gap-2 rounded-[4px] border border-dashed py-14 text-center">
-                        <p className="font-display text-lg">دفتر خالی</p>
-                        <p className="max-w-xs text-sm text-muted-foreground">
-                          نخستین تراکنش {scope === "expense" ? "هزینه" : "درآمد"} خود
-                          را ثبت کنید تا در دفتر بنشیند.
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* نمای سالانه */}
-                <Card className="break-inside-avoid gap-4 rounded-[4px] border-border/70 py-6 shadow-none">
-                  <CardHeader className="px-6">
-                    <CardTitle className="font-display text-xl">
-                      نمای سالانه — سال {faDigits(yearSums.jy)}
-                    </CardTitle>
-                    <CardDescription>
-                      جمع دوازده‌ماههٔ درآمد و هزینه
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="px-6">
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      {[
-                        { label: "درآمد سال", value: yearSums.income },
-                        { label: "هزینهٔ سال", value: yearSums.expense },
-                        { label: "تراز سال", value: yearSums.net },
-                      ].map((s, i) => (
-                        <div key={s.label} className="rounded-[4px] border bg-card p-4">
-                          <p className="eyebrow">{s.label}</p>
-                          <p
-                            className={cn(
-                              "mt-1.5 font-display text-lg tabular-nums",
-                              i === 2 && yearSums.net < 0 && "text-destructive",
-                            )}
-                          >
-                            {formatMoneyIn(s.value, unit)}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-4 grid gap-2">
-                      {Array.from({ length: 12 }, (_, i) => i + 1).map((jm) => {
-                        const s = yearSums.sums.get(`${yearSums.jy}-${jm}`) ?? {
-                          income: 0,
-                          expense: 0,
-                        };
-                        const net = s.income - s.expense;
-                        const max = Math.max(
-                          ...Array.from({ length: 12 }, (_, k) => {
-                            const v = yearSums.sums.get(`${yearSums.jy}-${k + 1}`);
-                            return v ? Math.max(v.income, v.expense) : 0;
-                          }),
-                          1,
-                        );
-                        return (
-                          <div key={jm} className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
-                            <span className="w-16 shrink-0 text-xs text-muted-foreground">
-                              {jMonthLabel(yearSums.jy, jm).split(" ")[0]}
-                            </span>
-                            <span className="flex h-2 items-center gap-px">
-                              <span
-                                className="h-2 rounded-l-sm bg-chart-2/80"
-                                style={{ width: `${(s.income / max) * 100}%` }}
-                              />
-                              <span
-                                className="h-2 rounded-r-sm bg-chart-4/80"
-                                style={{ width: `${(s.expense / max) * 100}%` }}
-                              />
-                            </span>
-                            <span
-                              className={cn(
-                                "w-24 shrink-0 text-left text-xs tabular-nums text-muted-foreground",
-                                net < 0 && "text-destructive",
-                              )}
-                            >
-                              {formatMoneyIn(net, unit)}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* روند ۶ ماه */}
-                <Card className="break-inside-avoid gap-4 rounded-[4px] border-border/70 py-6 shadow-none">
-                  <CardHeader className="px-6">
-                    <CardTitle className="font-display text-xl">
-                      روند شش‌ماهه
-                    </CardTitle>
-                    <CardDescription>
-                      درآمد در برابر هزینه، ماه به ماه
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="px-6">
-                    <TrendChart sumsByJMonth={trendSums} />
-                  </CardContent>
-                </Card>
-
-                {/* انتقال‌های میان حساب‌ها */}
-                {monthTransfers.length > 0 && (
-                  <Card className="break-inside-avoid gap-4 rounded-[4px] border-border/70 py-6 shadow-none">
-                    <CardHeader className="px-6">
-                      <CardTitle className="font-display text-xl">
-                        انتقال‌های این ماه
-                      </CardTitle>
-                      <CardDescription>
-                        جابه‌جایی پول میان حساب‌های خودتان — در آمار درآمد و هزینه نمی‌شمارند
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="px-6">
-                      <div className="grid gap-1.5">
-                        {monthTransfers.map((t) => (
-                          <div
-                            key={t._id}
-                            className="flex items-center gap-3 rounded-[4px] border bg-card px-3 py-2.5"
-                          >
-                            <ArrowLeftRight className="size-3.5 shrink-0 text-muted-foreground" />
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm">
-                                {t.accountId ? (accById.get(t.accountId)?.name ?? "حساب حذف‌شده") : "—"}
-                                {" ← "}
-                                {t.transferToId ? (accById.get(t.transferToId)?.name ?? "حساب حذف‌شده") : "—"}
-                              </p>
-                              <p className="text-[11px] text-muted-foreground">
-                                {jDateLabel(t.date)}
-                                {t.note ? ` · ${t.note}` : ""}
-                              </p>
-                            </div>
-                            <span className="shrink-0 font-display text-sm tabular-nums">
-                              {formatMoneyIn(t.amount, unit)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* بودجه‌ها */}
-                <Card className="break-inside-avoid gap-4 rounded-[4px] border-border/70 py-6 shadow-none">
-                  <CardHeader className="px-6">
-                    <CardAction>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setCatsOpen(true)}
-                      >
-                        <Tags className="size-3.5" />
-                        ویرایش بودجه‌ها
-                      </Button>
-                    </CardAction>
-                    <CardTitle className="font-display text-xl">بودجهٔ ماه</CardTitle>
-                    <CardDescription>
-                      {budgets.length > 0
-                        ? "سهم هر دسته از بودجهٔ ماهانه‌اش"
-                        : "برای دسته‌های هزینه، بودجهٔ ماهانه تعیین کنید"}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="px-6">
-                    {budgets.length === 0 ? (
-                      <p className="rounded-[4px] border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
-                        مثلاً برای «خوراک» سقف ماهانه بگذارید و مصرفش را همین‌جا ببینید.
-                      </p>
-                    ) : (
-                      <div className="grid gap-3">
-                        {budgets.map(({ cat, budget, spent }) => {
-                          const pct = Math.min(
-                            100,
-                            Math.round((spent / budget) * 100),
-                          );
-                          const over = spent > budget;
-                          return (
-                            <div key={cat._id} className="grid gap-1.5">
-                              <div className="flex items-baseline justify-between gap-3 text-sm">
-                                <span className="flex min-w-0 items-center gap-2">
-                                  <span
-                                    className="size-2 shrink-0 rounded-full"
-                                    style={{ backgroundColor: cat.color }}
-                                  />
-                                  <span className="truncate">{cat.name}</span>
-                                </span>
-                                <span
-                                  className={cn(
-                                    "shrink-0 tabular-nums text-muted-foreground",
-                                    over && "text-destructive",
-                                  )}
-                                >
-                                  {formatMoneyIn(spent, unit)} از{" "}
-                                  {formatMoneyIn(budget, unit)}
-                                  <span className="mr-1.5 text-xs">
-                                    · {faDigits(pct)}٪
-                                  </span>
-                                </span>
-                              </div>
-                              <div className="h-1 w-full rounded-full bg-secondary">
-                                <div
-                                  className={cn(
-                                    "h-1 rounded-full transition-all",
-                                    over ? "bg-destructive" : "bg-foreground/70",
-                                  )}
-                                  style={{ width: `${pct}%` }}
-                                />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-
-                {/* تراکنش‌ها */}
-                <Card className="min-w-0 break-inside-avoid gap-0 rounded-[4px] border-border/70 py-0 shadow-none">
-                <CardHeader className="max-sm:px-4 gap-3 border-b px-5 py-5">
-                  <CardAction className="max-sm:col-start-1 max-sm:row-start-2 max-sm:w-full max-sm:justify-self-stretch">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <div className="relative">
-                        <Search className="absolute left-2 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          value={query}
-                          onChange={(e) => setQuery(e.target.value)}
-                          placeholder="جست‌وجو…"
-                          className="h-8 w-32 bg-card pl-7 text-xs"
-                        />
-                      </div>
-                      <Select
-                        value={filter}
-                        onValueChange={(v) => setFilter(v as CatFilter)}
-                      >
-                        <SelectTrigger size="sm" className="w-32 bg-card text-xs">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">همهٔ دسته‌ها</SelectItem>
-                          {categories!.map((c) => (
-                            <SelectItem key={c._id} value={c._id}>
-                              {c.name}
-                            </SelectItem>
-                          ))}
-                          <SelectItem value="none">بدون دسته</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button
-                        variant="outline"
-                        size="icon-sm"
-                        aria-label="خروجی CSV"
-                        title="خروجی CSV این ماه"
-                        onClick={exportCsv}
-                      >
-                        <Download className="size-3.5" />
-                      </Button>
-                    </div>
-                  </CardAction>
-                  <CardTitle className="font-display text-xl">تراکنش‌ها</CardTitle>
-                  <CardDescription>
-                    {faDigits(filteredTxs.length)} سند در{" "}
-                    {jMonthLabel(monthJ.jy, monthJ.jm)}
-                  </CardDescription>
-                </CardHeader>
-                <div className="max-h-[560px] overflow-y-auto">
-                  {filteredTxs.length === 0 ? (
-                    <div className="grid place-items-center gap-2 px-6 py-16 text-center">
-                      <p className="font-display text-lg">چیزی ثبت نشده</p>
-                      <p className="max-w-[16rem] text-sm text-muted-foreground">
-                        {monthTxs.length > 0
-                          ? "هیچ سندی با این فیلتر یا جست‌وجو پیدا نشد."
-                          : "نخستین تراکنش این ماه را ثبت کنید."}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="max-sm:overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="hover:bg-transparent">
-                          <TableHead className="pr-5">تاریخ</TableHead>
-                          <TableHead>دسته</TableHead>
-                          <TableHead className="pl-5 text-right">مبلغ</TableHead>
-                          <TableHead className="w-0 pl-3" />
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredTxs.map((t) => {
-                          const cat = t.categoryId ? byId.get(t.categoryId) : undefined;
-                          const acc = t.accountId ? accById.get(t.accountId) : undefined;
-                          return (
-                            <TableRow key={t._id} className="group">
-                              <TableCell className="py-3 pr-5 align-top">
-                                <p className="text-sm tabular-nums">
-                                  {jDateLabel(t.date)}
-                                </p>
-                                {t.note && (
-                                  <p className="mt-0.5 max-w-36 truncate text-xs text-muted-foreground">
-                                    {t.note}
-                                  </p>
-                                )}
-                                {t.receipt && (
-                                  <button
-                                    type="button"
-                                    className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
-                                    onClick={() => setReceiptPreview(t)}
-                                  >
-                                    <Paperclip className="size-3" />
-                                    رسید
-                                  </button>
-                                )}
-                                {(() => {
-                                  const peer = (
-                                    peers as Array<{ id: string; label: string }> | undefined
-                                  )?.find((p) => p.id === t.createdBy);
-                                  if (!peer) return null;
-                                  return (
-                                    <p className="mt-1 text-[10px] text-muted-foreground/80">
-                                      ثبت {peer.label}
-                                    </p>
-                                  );
-                                })()}
-                              </TableCell>
-                              <TableCell className="align-top">
-                                {cat ? (
-                                  <span className="inline-flex items-center gap-1.5 text-sm">
-                                    <span
-                                      className="size-2 rounded-full"
-                                      style={{ backgroundColor: cat.color }}
-                                    />
-                                    {cat.name}
-                                  </span>
-                                ) : (
-                                  <span className="text-sm text-muted-foreground">
-                                    —
-                                  </span>
-                                )}
-                                <p className="mt-0.5 truncate text-[11px] text-muted-foreground/80">
-                                  {acc
-                                    ? acc.name
-                                    : t.type === "income"
-                                      ? "درآمد"
-                                      : t.type === "transfer"
-                                        ? `به ${t.transferToId ? (accById.get(t.transferToId)?.name ?? "—") : "—"}`
-                                        : "هزینه"}
-                                </p>
-                              </TableCell>
-                              <TableCell
-                                className={cn(
-                                  "py-3 pl-5 text-left align-top font-display text-base tabular-nums",
-                                  t.type === "income"
-                                    ? "text-chart-2"
-                                    : t.type === "transfer"
-                                      ? "text-muted-foreground"
-                                      : "text-foreground",
-                                )}
-                              >
-                                {formatMoneyIn(t.amount, unit)}
-                              </TableCell>
-                              <TableCell className="w-0 pl-3 align-top">
-                                <div className="flex gap-0.5 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-                                  <button
-                                    aria-label="ویرایش تراکنش"
-                                    className="grid size-6 place-items-center rounded-[3px] text-muted-foreground hover:bg-accent hover:text-foreground"
-                                    onClick={() => {
-                                      setEditingTx(t);
-                                      setTxOpen(true);
-                                    }}
-                                  >
-                                    <Pencil className="size-3" />
-                                  </button>
-                                  <button
-                                    aria-label="حذف تراکنش"
-                                    className="grid size-6 place-items-center rounded-[3px] text-muted-foreground hover:bg-accent hover:text-destructive"
-                                    onClick={() => setDeletingTx(t)}
-                                  >
-                                    <Trash2 className="size-3" />
-                                  </button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                    </div>
-                  )}
-                </div>
-              </Card>
+              {widgetsBoard.map(({ id, widget }) => (
+                <WidgetSlot key={id}>{widget}</WidgetSlot>
+              ))}
             </div>
           </>
         )}

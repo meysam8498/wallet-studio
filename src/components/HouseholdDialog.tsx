@@ -33,6 +33,7 @@ type HouseholdInfo = {
   name: string;
   ownerId: string;
   isOwner: boolean;
+  inviteCode?: string | null;
   members: Array<{ id: string; email?: string; isOwner: boolean }>;
 };
 
@@ -204,6 +205,16 @@ export function HouseholdDialog({
           ) : household === null ? (
             /* ---------- بدون خانوار: ساختن یا پیوستن ---------- */
             <div className="grid gap-5">
+              {/* مدیریت دفاتر — v2.7.0: دفتر فعال شما */}
+              <div className="flex items-center justify-between rounded-[4px] border border-primary/30 bg-primary/5 px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium">دفتر فعال: دفتر شخصی</p>
+                  <p className="text-xs text-muted-foreground">
+                    تراکنش‌ها و حساب‌های فقط خودتان — با ساختن خانوار، این دفتر
+                    مشترک می‌شود.
+                  </p>
+                </div>
+              </div>
               <div className="grid gap-2 rounded-[4px] border bg-secondary/40 p-4">
                 <p className="text-sm font-medium">دفتر مشترک تازه</p>
                 <p className="text-xs leading-5 text-muted-foreground">
@@ -252,6 +263,17 @@ export function HouseholdDialog({
           ) : (
             /* ---------- عضو خانوار ---------- */
             <div className="grid gap-4">
+              {/* مدیریت دفاتر — v2.7.0: نمای دفتر فعال با راهنمای بازگشت */}
+              <div className="flex items-center justify-between rounded-[4px] border border-primary/30 bg-primary/5 px-4 py-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">دفتر فعال: {household.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    همهٔ اعضا همین دفتر را می‌بینند؛ سندهای شما با نام خودتان ثبت
+                    می‌شود. با ترک یا انحلال، به دفتر شخصی‌تان برمی‌گردید.
+                  </p>
+                </div>
+              </div>
+
               <div className="flex items-center justify-between rounded-[4px] border bg-card px-4 py-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{household.name}</p>

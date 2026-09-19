@@ -45,10 +45,14 @@ jobs:
           cp -r App.app ../../Payload/
           cd ../..
           zip -r ../../../ios-unsigned.zip Payload
+          mv Payload ios-unsigned.ipa 2>/dev/null || zip -r ../../../ios-unsigned.ipa Payload
+          cd ../../../..
 
       - name: بارگذاری بسته به Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: ios-unsigned.zip
+          files: |
+            ios-unsigned.zip
+            ios-unsigned.ipa
           append_body: true

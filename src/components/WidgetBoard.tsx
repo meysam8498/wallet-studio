@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { ArrowDown, ArrowUp, GripVertical, LayoutGrid, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -256,4 +256,12 @@ export function boardLayout(order: WidgetId[], hidden: WidgetId[]) {
 /** برچسب کمکی برای نشان شمارهٔ کارت در منوی چیدمان */
 export function widgetIndexLabel(i: number): string {
   return faDigits(i + 1);
+}
+
+/**
+ * ظرفِ امن کارت — یکپارچگی masonry را حفظ می‌کند (break-inside) و اگر
+ * محتوای کارت در آینده شرطی شد، جای خالی به‌هم نمی‌ریزد.
+ */
+export function WidgetSlot({ children }: { children: ReactNode }) {
+  return <div className="min-w-0 break-inside-avoid">{children}</div>;
 }

@@ -209,7 +209,7 @@ export default function About() {
                 className="flex items-center gap-4 rounded-[4px] border bg-card p-5"
               >
                 <div className="grid size-11 shrink-0 place-items-center rounded-[3px] border">
-                  {d.platform === "android" ? (
+                  {d.platform === "android" || d.platform === "ios" ? (
                     <Smartphone className="size-5 text-muted-foreground" strokeWidth={1.5} />
                   ) : (
                     <MonitorDown className="size-5 text-muted-foreground" strokeWidth={1.5} />

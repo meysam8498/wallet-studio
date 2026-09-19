@@ -51,4 +51,6 @@
     <!-- شنود پیامک بانکی — مجوز خطرناک؛ در زمان اجرا و با تأیید کاربر درخواست می‌شود -->
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
     <uses-permission android:name="android.permission.READ_SMS" />
+    <!-- میکروفون برای تشخیص گفتار دستیار هوشمند — در زمان اجرا درخواست می‌شود -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 </manifest>

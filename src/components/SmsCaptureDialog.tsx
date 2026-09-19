@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { faDigits, formatMoneyIn, jalaliToGregorian, todayJ, type UnitId } from "@/lib/format";
+import { formatMoneyIn, groupDigitsInput, jalaliToGregorian, normalizeDigits, todayJ, type UnitId } from "@/lib/format";
 import type { BankSmsEvent } from "@/lib/sms-listener";
 
 /**
@@ -85,7 +85,7 @@ export function SmsCaptureDialog({
   if (eventKey !== lastKey) {
     setLastKey(eventKey);
     if (event) {
-      setAmountText(faDigits(event.amount));
+      setAmountText(groupDigitsInput(String(event.amount)));
       setType(event.kind);
       setAccountId("none");
       setNote(`پیامک بانک — ${event.body.slice(0, 90)}`);
@@ -105,7 +105,7 @@ export function SmsCaptureDialog({
   }, [event, categories]);
 
   const save = async () => {
-    const amount = Number(amountText.replace(/[^0-9]/g, ""));
+    const amount = Number(normalizeDigits(amountText).replace(/[^0-9.]/g, ""));
     if (!amount || amount <= 0) {
       toast.error("مبلغ معتبر نیست");
       return;
@@ -181,7 +181,7 @@ export function SmsCaptureDialog({
             <Input
               id="sms-amount"
               value={amountText}
-              onChange={(e) => setAmountText(e.target.value)}
+              onChange={(e) => setAmountText(groupDigitsInput(e.target.value))}
               inputMode="numeric"
               className="h-9"
             />

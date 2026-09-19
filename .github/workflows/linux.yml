@@ -37,6 +37,11 @@ jobs:
           VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
         run: bun x tauri build
 
+      - name: تغییر نام به الگوی latest
+        run: |
+          mkdir -p renamed
+          cp src-tauri/target/release/bundle/appimage/*.AppImage renamed/Daftaram-latest-linux.AppImage
+
       - name: بارگذاری بسته‌ها به Release
         # AppImage مستقل‌ترین قالب در توزیع‌های گنو/لینوکس است و deb برای
         # اوبونتو/دبیان. هر دو بدون امضای GPG منتشر می‌شوند.
@@ -46,4 +51,5 @@ jobs:
           files: |
             src-tauri/target/release/bundle/appimage/*.AppImage
             src-tauri/target/release/bundle/deb/*.deb
+            renamed/Daftaram-latest-linux.AppImage
           append_body: true

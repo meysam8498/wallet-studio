@@ -38,6 +38,12 @@ jobs:
           VITE_CONVEX_URL: ${{ vars.VITE_CONVEX_URL }}
         run: bun x tauri build --target x86_64-apple-darwin
 
+      - name: تغییر نام به الگوی latest
+        run: |
+          mkdir -p renamed
+          cp src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg renamed/Daftaram-latest-macOS-arm64.dmg
+          cp src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg renamed/Daftaram-latest-macOS-intel.dmg
+
       - name: بارگذاری بسته‌ها به Release
         # بسته‌ها امضای Apple ندارند؛ کاربر هنگام نخستین اجرا از
         # System Settings → Privacy & Security باید «Open Anyway» را بزند.
@@ -47,4 +53,6 @@ jobs:
           files: |
             src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/*.dmg
             src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/*.dmg
+            renamed/Daftaram-latest-macOS-arm64.dmg
+            renamed/Daftaram-latest-macOS-intel.dmg
           append_body: true
