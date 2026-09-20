@@ -5,6 +5,10 @@ on:
     tags: ["v*.*.*"]
   workflow_dispatch:
 
+# بارگذاری بسته‌ها به Release مجوز نوشتن محتوا می‌خواهد
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     name: ساخت بستهٔ ویندوز
